@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Ganich Beauty{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  {% csrf_token %}
+</head>
+<body>
+  <header>
+    <h1>Ganich Beauty</h1>
+    <div class="nav-links">
+      {% if user.is_authenticated %}
+        <a href="{% url 'maingb:profile' %}">Профиль</a>
+        <a href="{% url 'maingb:cart' %}" id="cart-btn">
+          Корзина
+          {% if cart_count > 0 %}
+            <span id="cart-count" class="cart-count-badge">{{ cart_count }}</span>
+          {% endif %}
+        </a>
+        <a href="{% url 'maingb:logout' %}">Выйти</a>
+      {% else %}
+        <a href="{% url 'maingb:login' %}">Войти</a>
+        <a href="{% url 'maingb:register' %}">Регистрация</a>
+      {% endif %}
+    </div>
+  </header>
+
+  <main>
+    {% if messages %}
+      {% for message in messages %}
+        <div style="background: #f8d7da; color: #721c24; padding: 1rem; text-align: center;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <div class="cart-sidebar" id="cart-sidebar">
+    <div class="cart-header">
+      <h2>Корзина</h2>
+      <button id="close-cart" class="btn btn-outline">&times;</button>
+    </div>
+    <div id="cart-items-container">
+      {% block cart_items %}{% endblock %}
+    </div>
+    {% block cart_footer %}{% endblock %}
+  </div>
+
+  <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>

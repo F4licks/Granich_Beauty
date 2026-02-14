@@ -1,0 +1,68 @@
+<!-- maingb/templates/profile.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Профиль | Ganich Beauty{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 2rem auto; padding: 0 1rem;">
+  <h2>Профиль пользователя</h2>
+
+  <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <h3>Аккаунт</h3>
+    <p><strong>Логин:</strong> {{ user.username }}</p>
+    <p><strong>Ник:</strong>
+      <form method="POST" style="display:inline;">
+        {% csrf_token %}
+        {{ profile_form.nickname }}
+        <button type="submit" name="save_profile" class="btn btn-outline" style="margin-left: 0.5rem; padding: 2px 8px; font-size:0.85rem;">Сохранить</button>
+      </form>
+    </p>
+    <p><strong>Почта:</strong> {{ user.email|default:"Не указана" }}</p>
+    
+    {% if user.email %}
+      <a href="#" class="btn btn-outline" style="margin-top: 0.5rem;">Изменить пароль</a>
+    {% else %}
+      <p style="color: #e91e63; font-size: 0.9rem;">Укажите email в настройках аккаунта, чтобы можно было менять пароль.</p>
+    {% endif %}
+  </div>
+
+  <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <h3>Адреса доставки</h3>
+    <form method="POST" style="margin-bottom: 1rem;">
+      {% csrf_token %}
+      {{ address_form.title }}
+      {{ address_form.address_line }}
+      <label>
+        {{ address_form.is_default }} По умолчанию
+      </label>
+      <button type="submit" name="add_address" class="btn btn-primary" style="margin-top: 0.5rem;">
+        Добавить адрес
+      </button>
+    </form>
+
+    <ul style="list-style: none; padding: 0;">
+      {% for addr in addresses %}
+        <li style="padding: 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
+          <div>
+            <strong>{{ addr.title|default:"Без названия" }}</strong><br>
+            {{ addr.address_line }}
+            {% if addr.is_default %}<span style="color:var(--pink); font-size:0.8rem;">(по умолчанию)</span>{% endif %}
+          </div>
+          <form method="POST" style="display:inline; margin-left: 1rem;">
+            {% csrf_token %}
+            <button type="submit" name="set_default" value="{{ addr.id }}" class="btn btn-outline" style="padding: 2px 8px; font-size:0.8rem;">
+              По умолчанию
+            </button>
+            <button type="submit" name="delete_addr" value="{{ addr.id }}" class="btn btn-outline" style="padding: 2px 8px; font-size:0.8rem; margin-left: 0.3rem;">
+              Удалить
+            </button>
+          </form>
+        </li>
+      {% empty %}
+        <li style="padding: 1rem; color: #777;">Адреса не добавлены</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}

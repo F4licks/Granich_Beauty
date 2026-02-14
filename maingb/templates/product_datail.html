@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }} | Ganich Beauty{% endblock %}
+
+{% block content %}
+<div class="product-detail" style="max-width: 1000px; margin: 2rem auto; padding: 0 1rem;">
+  <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 300px;">
+      <div class="carousel">
+        <div class="carousel-inner">
+          {% for img in product.images.all %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+              <img src="{{ img.image.url }}" alt="{{ product.name }}" class="product-img" style="width:100%; height:400px; object-fit:cover;">
+            </div>
+          {% empty %}
+            <div class="carousel-item active" style="background:#eee;height:400px;display:flex;align-items:center;justify-content:center;">
+              <span>Нет изображений</span>
+            </div>
+          {% endfor %}
+        </div>
+        <div class="carousel-controls">
+          {% for img in product.images.all %}
+            <span class="carousel-dot {% if forloop.first %}active{% endif %}"></span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div style="flex: 1; min-width: 300px;">
+      <h1>{{ product.name }}</h1>
+      <p class="product-desc" style="line-height: 1.6; margin: 1rem 0;">
+        {{ product.description|safe }}
+      </p>
+      <div class="product-price" style="font-size: 1.8rem; margin: 1rem 0;">{{ product.price }} ₽</div>
+
+      <div class="product-actions">
+        {% if user.is_authenticated %}
+          <a href="{% url 'maingb:add_to_cart' product.id %}" class="cart-btn">В корзину</a>
+        {% else %}
+          <button class="cart-btn btn-outline" onclick="alert('Войдите, чтобы добавить в корзину');">В корзину</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

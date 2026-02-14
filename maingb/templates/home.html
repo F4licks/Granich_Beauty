@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная | Ganich Beauty{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 4rem 1rem;">
+  <h2>Добро пожаловать в Ganich Beauty</h2>
+  <p style="max-width: 600px; margin: 1rem auto; font-size: 1.1rem; color: #555;">
+    Элегантные продукты для ухода за собой — созданные с любовью и заботой.
+  </p>
+  <a href="{% url 'maingb:product_list' %}" class="btn btn-primary" style="margin-top: 1rem; padding: 0.8rem 2rem; font-size: 1.1rem;">
+    Перейти к товарам
+  </a>
+</div>
+{% endblock %}

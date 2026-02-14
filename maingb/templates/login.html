@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Вход | Ganich Beauty{% endblock %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 3rem auto; padding: 0 1rem;">
+  <h2>Войти в аккаунт</h2>
+  <form method="POST">
+    {% csrf_token %}
+    <div style="margin-bottom: 1rem;">
+      {{ form.username.label_tag }}
+      {{ form.username }}
+    </div>
+    <div style="margin-bottom: 1rem;">
+      {{ form.password.label_tag }}
+      {{ form.password }}
+    </div>
+    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
+      Войти
+    </button>
+  </form>
+  <p style="text-align: center; margin-top: 1.5rem;">
+    Нет аккаунта? <a href="{% url 'maingb:register' %}">Зарегистрироваться</a>
+  </p>
+</div>
+{% endblock %}

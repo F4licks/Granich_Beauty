@@ -1,15 +1,127 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Главная | Ganich Beauty{% endblock %}
+{% block title %}Ganich Beauty{% endblock %}
 
 {% block content %}
-<div style="text-align: center; padding: 4rem 1rem;">
-  <h2>Добро пожаловать в Ganich Beauty</h2>
-  <p style="max-width: 600px; margin: 1rem auto; font-size: 1.1rem; color: #555;">
-    Элегантные продукты для ухода за собой — созданные с любовью и заботой.
-  </p>
-  <a href="{% url 'maingb:product_list' %}" class="btn btn-primary" style="margin-top: 1rem; padding: 0.8rem 2rem; font-size: 1.1rem;">
-    Перейти к товарам
-  </a>
+<div style="padding: 2rem 1rem; max-width: 1200px; margin: 0 auto;">
+  <h1 style="text-align: center; margin-bottom: 2rem;">Ganich Beauty</h1>
+
+  {% if products %}
+    {% for product in products %}
+      <div class="card product-card" data-product-id="{{ product.id }}" style="margin-bottom: 2rem; display: flex; gap: 2rem; flex-wrap: wrap;">
+        <div style="flex: 0 0 300px; max-width: 300px;">
+          <div class="carousel">
+            <div class="carousel-inner">
+              {% for img in product.images.all %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                  <img src="{{ img.image.url }}" alt="{{ product.name }}" class="product-img" style="width:100%; height:300px; object-fit:cover; border-radius: 8px;">
+                </div>
+              {% empty %}
+                <div class="carousel-item active" style="background:#eee; height:300px; display:flex; align-items:center; justify-content:center; border-radius: 8px;">
+                  <span>Нет изображений</span>
+                </div>
+              {% endfor %}
+            </div>
+            <div class="carousel-controls" style="margin-top: 8px;">
+              {% for img in product.images.all %}
+                <span class="carousel-dot {% if forloop.first %}active{% endif %}"></span>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div style="flex: 1; min-width: 300px;">
+          <h3 class="product-title">{{ product.name }}</h3>
+          <p class="product-desc">{{ product.description|safe }}</p>
+          <div class="product-price" style="font-size: 1.4rem; margin: 1rem 0; color: var(--pink-dark);">{{ product.price }} ₽</div>
+
+          <div class="product-actions">
+            {% if user.is_authenticated %}
+              {% with item=product.cart_items|first %}
+                {% if item %}
+                  <div class="cart-counter" style="display: flex; align-items: center; gap: 0.5rem;">
+                    <button class="cart-dec btn btn-outline" style="width: 30px;">−</button>
+                    <span class="cart-qty" style="font-weight: bold;">{{ item.quantity }}</span>
+                    <button class="cart-inc btn btn-outline" style="width: 30px;">+</button>
+                  </div>
+                {% else %}
+                  <button class="cart-add btn btn-primary">В корзину</button>
+                {% endif %}
+              {% endwith %}
+            {% else %}
+              <button class="cart-add btn btn-outline" onclick="alert('Пожалуйста, войдите или зарегистрируйтесь');">
+                В корзину
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p style="text-align: center; padding: 2rem; color: #777;">Товары скоро появятся!</p>
+  {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function attachListeners(card) {
+    const productId = card.dataset.productId;
+    
+    const addBtn = card.querySelector('.cart-add');
+    const incBtn = card.querySelector('.cart-inc');
+    const decBtn = card.querySelector('.cart-dec');
+
+    if (addBtn) {
+      addBtn.onclick = () => updateCart(productId, 'add', card);
+    }
+    if (incBtn) {
+      incBtn.onclick = () => updateCart(productId, 'add', card);
+    }
+    if (decBtn) {
+      decBtn.onclick = () => updateCart(productId, 'remove', card);
+    }
+  }
+
+  function updateCart(productId, action, card) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch("{% url 'maingb:ajax_update_cart' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `product_id=${productId}&action=${action}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "removed") {
+        card.querySelector('.product-actions').innerHTML = `
+          <button class="cart-add btn btn-primary">В корзину</button>
+        `;
+      } else if (data.status === "updated") {
+        card.querySelector('.product-actions').innerHTML = `
+          <div class="cart-counter" style="display: flex; align-items: center; gap: 0.5rem;">
+            <button class="cart-dec btn btn-outline" style="width: 30px;">−</button>
+            <span class="cart-qty" style="font-weight: bold;">${data.item_count}</span>
+            <button class="cart-inc btn btn-outline" style="width: 30px;">+</button>
+          </div>
+        `;
+      }
+      
+      const badge = document.getElementById('cart-count');
+      if (badge) {
+        badge.textContent = data.cart_count;
+        badge.style.display = data.cart_count > 0 ? 'inline-block' : 'none';
+      }
+
+      attachListeners(card);
+    })
+    .catch(err => console.error("Ошибка:", err));
+  }
+
+  document.querySelectorAll('.product-card').forEach(card => attachListeners(card));
+});
+</script>
 {% endblock %}

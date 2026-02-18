@@ -8,7 +8,13 @@
 {% if cart_items %}
   <div style="max-width: 800px; margin: 0 auto;">
     {% for item in cart_items %}
-      <div class="card" style="padding: 1.2rem; margin-bottom: 1rem; display: flex; gap: 1rem;">
+      <div class="card cart-item-row"
+           data-item-id="{{ item.id }}"
+           data-product-id="{{ item.product.id }}"
+           data-price="{{ item.product.price }}"
+           style="padding: 1.2rem; margin-bottom: 1rem; display: flex; gap: 1rem;">
+        
+        <!-- Изображение -->
         <div style="flex: 0 0 100px; height: 100px; background:#f5f5f5; border-radius: 4px; overflow:hidden;">
           {% if item.product.images.all %}
             <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" style="width:100%; height:100%; object-fit:cover;">
@@ -17,25 +23,32 @@
           {% endif %}
         </div>
 
+        <!-- Информация о товаре -->
         <div style="flex: 1;">
           <h3>{{ item.product.name }}</h3>
-          <p>{{ item.product.price }} ₽ × {{ item.quantity }}</p>
-          <form method="POST" action="{% url 'maingb:remove_from_cart' item.id %}" style="margin-top: 0.5rem;">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-outline" style="padding: 4px 8px; font-size:0.9rem;">Удалить</button>
-          </form>
+          <p>
+            <span class="item-price">{{ item.product.price }} ₽</span> × 
+            <span class="qty-value">{{ item.quantity }}</span>
+          </p>
+          <div class="qty-control" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.5rem;">
+            <button class="qty-dec btn btn-outline" style="width: 30px;">−</button>
+            <span class="qty-value-display" style="font-weight: bold;">{{ item.quantity }}</span>
+            <button class="qty-inc btn btn-outline" style="width: 30px;">+</button>
+          </div>
         </div>
 
-        <div style="font-weight: bold; font-size: 1.2rem; color: var(--pink-dark);">
-          {{ item.product.price|floatformat:2 }} ₽
+        <!-- Итог по товару -->
+        <div class="item-total" style="font-weight: bold; font-size: 1.2rem; color: var(--pink-dark);">
+          {{ item.total_price|floatformat:2 }} ₽
         </div>
       </div>
     {% endfor %}
 
+    <!-- Итоговая сумма -->
     <div style="border-top: 1px solid #eee; padding-top: 1.5rem; margin-top: 1.5rem;">
       <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: 600;">
         <span>Итого:</span>
-        <span>{{ total|floatformat:2 }} ₽</span>
+        <span id="cart-total">{{ total|floatformat:2 }} ₽</span>
       </div>
       <button class="btn btn-primary" style="margin-top: 1.5rem; width: 100%; padding: 12px;">
         Оформить заказ
@@ -45,9 +58,85 @@
 {% else %}
   <div style="text-align: center; padding: 4rem 1rem; color: #777;">
     <p>Корзина пуста.</p>
-    <a href="{% url 'maingb:product_list' %}" class="btn btn-primary" style="margin-top: 1rem;">
+    <a href="{% url 'maingb:home' %}" class="btn btn-primary" style="margin-top: 1rem;">
       Перейти к товарам
     </a>
   </div>
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Функция пересчёта общей суммы
+  function updateTotal() {
+    let total = 0;
+    document.querySelectorAll('.cart-item-row').forEach(row => {
+      const qty = parseInt(row.querySelector('.qty-value').textContent);
+      const price = parseFloat(row.dataset.price);
+      total += qty * price;
+    });
+    
+    const totalEl = document.getElementById('cart-total');
+    if (totalEl) {
+      totalEl.textContent = total.toFixed(2) + ' ₽';
+    }
+  }
+
+  // Функция обновления товара через AJAX
+  function updateCartItem(productId, action, row) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch("{% url 'maingb:ajax_update_cart' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `product_id=${productId}&action=${action}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "removed") {
+        // Удалить строку из DOM
+        row.remove();
+      } else if (data.status === "updated") {
+        // Обновить количество в двух местах
+        row.querySelector('.qty-value').textContent = data.item_count;
+        row.querySelector('.qty-value-display').textContent = data.item_count;
+      }
+
+      // Обновить значок корзины в шапке
+      const badge = document.getElementById('cart-count');
+      if (badge) {
+        badge.textContent = data.cart_count;
+        badge.style.display = data.cart_count > 0 ? 'inline-block' : 'none';
+      }
+
+      // Пересчитать итоговую сумму
+      updateTotal();
+    })
+    .catch(err => console.error("Ошибка при обновлении корзины:", err));
+  }
+
+  // Назначить обработчики на кнопки "+"
+  document.querySelectorAll('.qty-inc').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const row = this.closest('.cart-item-row');
+      const productId = row.dataset.productId;
+      updateCartItem(productId, 'add', row);
+    });
+  });
+
+  // Назначить обработчики на кнопки "-"
+  document.querySelectorAll('.qty-dec').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const row = this.closest('.cart-item-row');
+      const productId = row.dataset.productId;
+      updateCartItem(productId, 'remove', row);
+    });
+  });
+
+  // Инициализация: рассчитать сумму при загрузке
+  updateTotal();
+});
+</script>
 {% endblock %}

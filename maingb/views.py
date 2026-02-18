@@ -4,7 +4,7 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
-from django.db.models import Sum
+from django.db.models import Sum, Prefetch
 from django.contrib.auth.models import User
 from .models import Product, CartItem, Address, UserProfile
 from .forms import RegisterForm, ProfileForm, AddressForm, PasswordChangeForm
@@ -18,17 +18,21 @@ def get_cart_count(user):
 
 
 def home(request):
-    context = {'cart_count': get_cart_count(request.user)}
-    return render(request, 'home.html', context)
-
-
-def product_list(request):
-    products = Product.objects.all()
+    if request.user.is_authenticated:
+        cart_prefetch = Prefetch(
+            'cartitem_set',
+            queryset=CartItem.objects.filter(user=request.user),
+            to_attr='cart_items'
+        )
+        products = Product.objects.prefetch_related(cart_prefetch).all()
+    else:
+        products = Product.objects.all()
+    
     context = {
         'products': products,
         'cart_count': get_cart_count(request.user),
     }
-    return render(request, 'products.html', context)
+    return render(request, 'home.html', context)
 
 
 def product_detail(request, pk):
@@ -55,41 +59,48 @@ def cart_view(request):
 
 
 @login_required
-def add_to_cart(request, product_id):
+def ajax_update_cart(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Только POST"}, status=400)
+
+    product_id = request.POST.get("product_id")
+    action = request.POST.get("action")
+
+    if not product_id:
+        return JsonResponse({"error": "Нет product_id"}, status=400)
+
     product = get_object_or_404(Product, id=product_id)
     cart_item, created = CartItem.objects.get_or_create(
         user=request.user,
         product=product,
-        defaults={'quantity': 1}
+        defaults={"quantity": 1}
     )
-    if not created:
-        cart_item.quantity += 1
-        cart_item.save()
 
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({
-            'success': True,
-            'cart_count': get_cart_count(request.user),
-            'item_count': cart_item.quantity
-        })
-    return redirect('maingb:cart')
+    if action == "add":
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+    elif action == "remove":
+        if cart_item.quantity > 1:
+            cart_item.quantity -= 1
+            cart_item.save()
+        else:
+            cart_item.delete()
+            return JsonResponse({
+                "status": "removed",
+                "cart_count": get_cart_count(request.user),
+                "product_price": float(product.price),
+                "item_count": 0
+            })
+    else:
+        return JsonResponse({"error": "Неизвестное действие"}, status=400)
 
-
-@login_required
-def update_cart_item(request, item_id):
-    item = get_object_or_404(CartItem, id=item_id, user=request.user)
-    qty = request.POST.get('quantity')
-    if qty and qty.isdigit():
-        item.quantity = int(qty)
-        item.save()
-    return redirect('maingb:cart')
-
-
-@login_required
-def remove_from_cart(request, item_id):
-    item = get_object_or_404(CartItem, id=item_id, user=request.user)
-    item.delete()
-    return redirect('maingb:cart')
+    return JsonResponse({
+        "status": "updated",
+        "cart_count": get_cart_count(request.user),
+        "item_count": cart_item.quantity,
+        "product_price": float(product.price)
+    })
 
 
 def login_view(request):

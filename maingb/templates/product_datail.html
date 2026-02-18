@@ -3,22 +3,22 @@
 {% block title %}{{ product.name }} | Ganich Beauty{% endblock %}
 
 {% block content %}
-<div class="product-detail" style="max-width: 1000px; margin: 2rem auto; padding: 0 1rem;">
+<div style="padding: 2rem 1rem; max-width: 1200px; margin: 0 auto;">
   <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-    <div style="flex: 1; min-width: 300px;">
+    <div style="flex: 0 0 400px; max-width: 400px;">
       <div class="carousel">
         <div class="carousel-inner">
           {% for img in product.images.all %}
             <div class="carousel-item {% if forloop.first %}active{% endif %}">
-              <img src="{{ img.image.url }}" alt="{{ product.name }}" class="product-img" style="width:100%; height:400px; object-fit:cover;">
+              <img src="{{ img.image.url }}" alt="{{ product.name }}" class="product-img" style="width:100%; height:400px; object-fit:cover; border-radius: 8px;">
             </div>
           {% empty %}
-            <div class="carousel-item active" style="background:#eee;height:400px;display:flex;align-items:center;justify-content:center;">
+            <div class="carousel-item active" style="background:#eee; height:400px; display:flex; align-items:center; justify-content:center; border-radius: 8px;">
               <span>Нет изображений</span>
             </div>
           {% endfor %}
         </div>
-        <div class="carousel-controls">
+        <div class="carousel-controls" style="margin-top: 8px;">
           {% for img in product.images.all %}
             <span class="carousel-dot {% if forloop.first %}active{% endif %}"></span>
           {% endfor %}
@@ -31,16 +31,77 @@
       <p class="product-desc" style="line-height: 1.6; margin: 1rem 0;">
         {{ product.description|safe }}
       </p>
-      <div class="product-price" style="font-size: 1.8rem; margin: 1rem 0;">{{ product.price }} ₽</div>
+      <div class="product-price" style="font-size: 1.8rem; margin: 1rem 0; color: var(--pink-dark);">{{ product.price }} ₽</div>
 
       <div class="product-actions">
         {% if user.is_authenticated %}
-          <a href="{% url 'maingb:add_to_cart' product.id %}" class="cart-btn">В корзину</a>
+          {% with item=product.cart_items|first %}
+            {% if item %}
+              <div class="cart-counter" style="display: flex; align-items: center; gap: 0.5rem;">
+                <button class="cart-dec btn btn-outline" style="width: 30px;">−</button>
+                <span class="cart-qty" style="font-weight: bold;">{{ item.quantity }}</span>
+                <button class="cart-inc btn btn-outline" style="width: 30px;">+</button>
+              </div>
+            {% else %}
+              <button class="cart-add btn btn-primary">В корзину</button>
+            {% endif %}
+          {% endwith %}
         {% else %}
-          <button class="cart-btn btn-outline" onclick="alert('Войдите, чтобы добавить в корзину');">В корзину</button>
+          <button class="cart-add btn btn-outline" onclick="alert('Войдите, чтобы добавить в корзину');">
+            В корзину
+          </button>
         {% endif %}
       </div>
     </div>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const productId = "{{ product.id }}";
+  
+  function updateCart(action) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    fetch("{% url 'maingb:ajax_update_cart' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `product_id=${productId}&action=${action}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      const actionsDiv = document.querySelector('.product-actions');
+      if (data.status === "removed") {
+        actionsDiv.innerHTML = `<button class="cart-add btn btn-primary">В корзину</button>`;
+        attachListeners();
+      } else if (data.status === "updated") {
+        actionsDiv.innerHTML = `
+          <div class="cart-counter" style="display: flex; align-items: center; gap: 0.5rem;">
+            <button class="cart-dec btn btn-outline" style="width: 30px;">−</button>
+            <span class="cart-qty" style="font-weight: bold;">${data.item_count}</span>
+            <button class="cart-inc btn btn-outline" style="width: 30px;">+</button>
+          </div>
+        `;
+        attachListeners();
+      }
+
+      const badge = document.getElementById('cart-count');
+      if (badge) {
+        badge.textContent = data.cart_count;
+        badge.style.display = data.cart_count > 0 ? 'inline-block' : 'none';
+      }
+    });
+  }
+
+  function attachListeners() {
+    document.querySelector('.cart-add')?.addEventListener('click', () => updateCart('add'));
+    document.querySelector('.cart-inc')?.addEventListener('click', () => updateCart('add'));
+    document.querySelector('.cart-dec')?.addEventListener('click', () => updateCart('remove'));
+  }
+
+  attachListeners();
+});
+</script>
 {% endblock %}

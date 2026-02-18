@@ -12,6 +12,7 @@
   <header>
     <h1>Ganich Beauty</h1>
     <div class="nav-links">
+      <a href="{% url 'maingb:home' %}">Главная</a>
       {% if user.is_authenticated %}
         <a href="{% url 'maingb:profile' %}">Профиль</a>
         <a href="{% url 'maingb:cart' %}" id="cart-btn">
@@ -38,18 +39,6 @@
     {% endif %}
     {% block content %}{% endblock %}
   </main>
-
-  <div class="cart-overlay" id="cart-overlay"></div>
-  <div class="cart-sidebar" id="cart-sidebar">
-    <div class="cart-header">
-      <h2>Корзина</h2>
-      <button id="close-cart" class="btn btn-outline">&times;</button>
-    </div>
-    <div id="cart-items-container">
-      {% block cart_items %}{% endblock %}
-    </div>
-    {% block cart_footer %}{% endblock %}
-  </div>
 
   <script src="{% static 'js/script.js' %}"></script>
 </body>

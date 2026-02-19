@@ -24,9 +24,9 @@ def home(request):
             queryset=CartItem.objects.filter(user=request.user),
             to_attr='cart_items'
         )
-        products = Product.objects.prefetch_related(cart_prefetch).all()
+        products = Product.objects.prefetch_related(cart_prefetch, 'images').all()
     else:
-        products = Product.objects.all()
+        products = Product.objects.prefetch_related('images').all()
     
     context = {
         'products': products,

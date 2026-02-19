@@ -10,59 +10,51 @@
 
   <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
     <h3>Аккаунт</h3>
+    
     <p><strong>Логин:</strong> {{ user.username }}</p>
-    <p><strong>Ник:</strong>
-      <form method="POST" style="display:inline;">
+    
+    <p>
+      <strong>Ник:</strong>
+      <form method="POST" style="display:inline; margin-left: 0.5rem;">
         {% csrf_token %}
         {{ profile_form.nickname }}
-        <button type="submit" name="save_profile" class="btn btn-outline" style="margin-left: 0.5rem; padding: 2px 8px; font-size:0.85rem;">Сохранить</button>
+        <button type="submit" name="save_profile" class="btn btn-outline" style="padding: 4px 10px; font-size:0.85rem;">
+          Сохранить
+        </button>
       </form>
     </p>
+
     <p><strong>Почта:</strong> {{ user.email|default:"Не указана" }}</p>
-    
+
     {% if user.email %}
-      <a href="#" class="btn btn-outline" style="margin-top: 0.5rem;">Изменить пароль</a>
-    {% else %}
-      <p style="color: #e91e63; font-size: 0.9rem;">Укажите email в настройках аккаунта, чтобы можно было менять пароль.</p>
-    {% endif %}
-  </div>
-
-  <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
-    <h3>Адреса доставки</h3>
-    <form method="POST" style="margin-bottom: 1rem;">
-      {% csrf_token %}
-      {{ address_form.title }}
-      {{ address_form.address_line }}
-      <label>
-        {{ address_form.is_default }} По умолчанию
-      </label>
-      <button type="submit" name="add_address" class="btn btn-primary" style="margin-top: 0.5rem;">
-        Добавить адрес
-      </button>
-    </form>
-
-    <ul style="list-style: none; padding: 0;">
-      {% for addr in addresses %}
-        <li style="padding: 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between;">
-          <div>
-            <strong>{{ addr.title|default:"Без названия" }}</strong><br>
-            {{ addr.address_line }}
-            {% if addr.is_default %}<span style="color:var(--pink); font-size:0.8rem;">(по умолчанию)</span>{% endif %}
+      <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+        <h4>Изменить пароль</h4>
+        <form method="POST">
+          {% csrf_token %}
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <label>{{ password_form.old_password.label }}</label><br>
+              {{ password_form.old_password }}
+            </div>
+            <div>
+              <label>{{ password_form.new_password1.label }}</label><br>
+              {{ password_form.new_password1 }}
+            </div>
           </div>
-          <form method="POST" style="display:inline; margin-left: 1rem;">
-            {% csrf_token %}
-            <button type="submit" name="set_default" value="{{ addr.id }}" class="btn btn-outline" style="padding: 2px 8px; font-size:0.8rem;">
-              По умолчанию
-            </button>
-            <button type="submit" name="delete_addr" value="{{ addr.id }}" class="btn btn-outline" style="padding: 2px 8px; font-size:0.8rem; margin-left: 0.3rem;">
-              Удалить
-            </button>
-          </form>
-        </li>
-      {% empty %}
-        <li style="padding: 1rem; color: #777;">Адреса не добавлены</li>
-      {% endfor %}
-    </ul>
+          <div>
+            <label>{{ password_form.new_password2.label }}</label><br>
+            {{ password_form.new_password2 }}
+          </div>
+          <button type="submit" name="change_password" class="btn btn-primary" style="margin-top: 1rem; padding: 6px 16px;">
+            Изменить пароль
+          </button>
+        </form>
+      </div>
+    {% else %}
+      <p style="color: #e91e63; font-size: 0.9rem; margin-top: 1rem;">
+        Чтобы изменить пароль, укажите email в настройках аккаунта (например, через админку).
+      </p>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

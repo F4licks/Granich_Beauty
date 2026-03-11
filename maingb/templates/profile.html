@@ -1,0 +1,60 @@
+<!-- maingb/templates/profile.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Профиль | Ganich Beauty{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 2rem auto; padding: 0 1rem;">
+  <h2>Профиль пользователя</h2>
+
+  <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
+    <h3>Аккаунт</h3>
+    
+    <p><strong>Логин:</strong> {{ user.username }}</p>
+    
+    <p>
+      <strong>Ник:</strong>
+      <form method="POST" style="display:inline; margin-left: 0.5rem;">
+        {% csrf_token %}
+        {{ profile_form.nickname }}
+        <button type="submit" name="save_profile" class="btn btn-outline" style="padding: 4px 10px; font-size:0.85rem;">
+          Сохранить
+        </button>
+      </form>
+    </p>
+
+    <p><strong>Почта:</strong> {{ user.email|default:"Не указана" }}</p>
+
+    {% if user.email %}
+      <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+        <h4>Изменить пароль</h4>
+        <form method="POST">
+          {% csrf_token %}
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+            <div>
+              <label>{{ password_form.old_password.label }}</label><br>
+              {{ password_form.old_password }}
+            </div>
+            <div>
+              <label>{{ password_form.new_password1.label }}</label><br>
+              {{ password_form.new_password1 }}
+            </div>
+          </div>
+          <div>
+            <label>{{ password_form.new_password2.label }}</label><br>
+            {{ password_form.new_password2 }}
+          </div>
+          <button type="submit" name="change_password" class="btn btn-primary" style="margin-top: 1rem; padding: 6px 16px;">
+            Изменить пароль
+          </button>
+        </form>
+      </div>
+    {% else %}
+      <p style="color: #e91e63; font-size: 0.9rem; margin-top: 1rem;">
+        Чтобы изменить пароль, укажите email в настройках аккаунта (например, через админку).
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

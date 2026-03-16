@@ -10,7 +10,6 @@
 
   <!-- Поиск и сортировка -->
   <div style="max-width: 800px; margin: 0 auto 2rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
-    <!-- Поиск -->
     <div style="flex: 1; min-width: 200px;">
       <form method="GET" style="display: flex; gap: 0.5rem;">
         <input type="text" 
@@ -22,22 +21,12 @@
       </form>
     </div>
 
-    <!-- Сортировка по цене -->
     <div style="min-width: 200px;">
       <form method="GET" style="display: flex; gap: 0.5rem;">
-        <!-- Передаём текущие параметры, чтобы не сбрасывались -->
-        {% if search_query %}
-          <input type="hidden" name="q" value="{{ search_query }}">
-        {% endif %}
-        {% if selected_category %}
-          <input type="hidden" name="category" value="{{ selected_category }}">
-        {% endif %}
-        {% if price_min %}
-          <input type="hidden" name="price_min" value="{{ price_min }}">
-        {% endif %}
-        {% if price_max %}
-          <input type="hidden" name="price_max" value="{{ price_max }}">
-        {% endif %}
+        {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+        {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+        {% if price_min %}<input type="hidden" name="price_min" value="{{ price_min }}">{% endif %}
+        {% if price_max %}<input type="hidden" name="price_max" value="{{ price_max }}">{% endif %}
 
         <select name="sort" onchange="this.form.submit()" style="padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
           <option value="">Сортировка по цене</option>
@@ -48,11 +37,9 @@
     </div>
   </div>
 
-  <!-- Основной контейнер: фильтр + товары -->
   <div style="display: flex; gap: 2rem;">
     <!-- Фильтр слева -->
     <div style="width: 240px; flex-shrink: 0; position: sticky; top: 20px; height: fit-content; background: #f9f9f9; padding: 1.2rem; border-radius: 8px;">
-      <!-- Категории -->
       <strong>Категория:</strong>
       <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.8rem; margin-bottom: 1.5rem;">
         <a href="?{% if search_query %}q={{ search_query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
@@ -67,19 +54,11 @@
         {% endfor %}
       </div>
 
-      <!-- Фильтр по цене -->
       <strong>Цена (₽):</strong>
       <form method="GET" style="margin-top: 0.8rem;">
-        <!-- Сохраняем другие параметры -->
-        {% if search_query %}
-          <input type="hidden" name="q" value="{{ search_query }}">
-        {% endif %}
-        {% if selected_category %}
-          <input type="hidden" name="category" value="{{ selected_category }}">
-        {% endif %}
-        {% if sort %}
-          <input type="hidden" name="sort" value="{{ sort }}">
-        {% endif %}
+        {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+        {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
+        {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
 
         <div style="display: flex; gap: 0.3rem; margin-top: 0.5rem;">
           <input type="number" name="price_min" value="{{ price_min|default:'' }}" 
@@ -95,12 +74,11 @@
       </form>
     </div>
 
-    <!-- Товары справа -->
+    <!-- Товары -->
     <div style="flex: 1;">
       {% if products %}
         {% for product in products %}
           <div class="card product-card" data-product-id="{{ product.id }}" style="margin-bottom: 2rem; display: flex; gap: 2rem; flex-wrap: wrap; align-items: flex-start;">
-            <!-- Фото слева -->
             <div style="flex: 0 0 300px; max-width: 300px;">
               <div class="carousel">
                 <div class="carousel-inner">
@@ -124,7 +102,6 @@
               </div>
             </div>
 
-            <!-- Информация справа -->
             <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; justify-content: space-between;">
               <div>
                 <h3 class="product-title">{{ product.name }}</h3>
@@ -173,39 +150,26 @@
 document.addEventListener('DOMContentLoaded', function () {
   function attachListeners(card) {
     const productId = card.dataset.productId;
-    
     const addBtn = card.querySelector('.cart-add');
     const incBtn = card.querySelector('.cart-inc');
     const decBtn = card.querySelector('.cart-dec');
 
-    if (addBtn) {
-      addBtn.onclick = () => updateCart(productId, 'add', card);
-    }
-    if (incBtn) {
-      incBtn.onclick = () => updateCart(productId, 'add', card);
-    }
-    if (decBtn) {
-      decBtn.onclick = () => updateCart(productId, 'remove', card);
-    }
+    if (addBtn) addBtn.onclick = () => updateCart(productId, 'add', card);
+    if (incBtn) incBtn.onclick = () => updateCart(productId, 'add', card);
+    if (decBtn) decBtn.onclick = () => updateCart(productId, 'remove', card);
   }
 
   function updateCart(productId, action, card) {
     const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    
     fetch("{% url 'maingb:ajax_update_cart' %}", {
       method: "POST",
-      headers: {
-        "X-CSRFToken": csrftoken,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
+      headers: {"X-CSRFToken": csrftoken, "Content-Type": "application/x-www-form-urlencoded"},
       body: `product_id=${productId}&action=${action}`
     })
     .then(response => response.json())
     .then(data => {
       if (data.status === "removed") {
-        card.querySelector('.product-actions').innerHTML = `
-          <button class="cart-add btn btn-primary">В корзину</button>
-        `;
+        card.querySelector('.product-actions').innerHTML = `<button class="cart-add btn btn-primary">В корзину</button>`;
       } else if (data.status === "updated") {
         card.querySelector('.product-actions').innerHTML = `
           <div class="cart-counter" style="display: flex; align-items: center; gap: 0.5rem;">
@@ -215,13 +179,11 @@ document.addEventListener('DOMContentLoaded', function () {
           </div>
         `;
       }
-      
       const badge = document.getElementById('cart-count');
       if (badge) {
         badge.textContent = data.cart_count;
         badge.style.display = data.cart_count > 0 ? 'inline-block' : 'none';
       }
-
       attachListeners(card);
     })
     .catch(err => console.error("Ошибка:", err));

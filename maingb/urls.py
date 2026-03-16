@@ -11,6 +11,9 @@ urlpatterns = [
     path('cart/', views.cart_view, name='cart'),
     path('cart/ajax-update/', views.ajax_update_cart, name='ajax_update_cart'),
     
+    # Оформление заказа
+    path('checkout/', views.checkout_view, name='checkout'),
+    
     # Профиль и аккаунт
     path('profile/', views.profile_view, name='profile'),
     path('login/', views.login_view, name='login'),

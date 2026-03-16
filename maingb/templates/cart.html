@@ -50,9 +50,9 @@
         <span>Итого:</span>
         <span id="cart-total">{{ total|floatformat:2 }} ₽</span>
       </div>
-      <button class="btn btn-primary" style="margin-top: 1.5rem; width: 100%; padding: 12px;">
+      <a href="{% url 'maingb:checkout' %}" class="btn btn-primary" style="margin-top: 1.5rem; width: 100%; padding: 12px; text-align: center; text-decoration: none; color: white; display: inline-block;">
         Оформить заказ
-      </button>
+      </a>
     </div>
   </div>
 {% else %}

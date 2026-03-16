@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Оформление заказа | Ganich Beauty{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto; padding: 0 1rem;">
+  <h2>Оформление заказа</h2>
+
+  {% if cart_items %}
+    <!-- Товары -->
+    <div style="margin-bottom: 2rem;">
+      <h3>Товары:</h3>
+      {% for item in cart_items %}
+        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #eee;">
+          <span>{{ item.quantity }} × {{ item.product.name }}</span>
+          <span>{{ item.product.price|floatformat:2 }} ₽</span>
+        </div>
+      {% endfor %}
+      <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 1rem; font-size: 1.2rem;">
+        <span>Итого:</span>
+        <span>{{ total|floatformat:2 }} ₽</span>
+      </div>
+    </div>
+
+    <!-- Форма оформления -->
+    <form method="POST">
+      {% csrf_token %}
+
+      <!-- Пункт выдачи -->
+      <div style="margin-bottom: 1.5rem;">
+        <label><strong>Пункт выдачи:</strong></label>
+        {% if delivery_points %}
+          <select name="delivery_point" required style="width: 100%; padding: 0.5rem; margin-top: 0.5rem; border: 1px solid #ccc; border-radius: 4px;">
+            <option value="">Выберите пункт выдачи</option>
+            {% for point in delivery_points %}
+              <option value="{{ point.id }}">{{ point.name }} — {{ point.address }}</option>
+            {% endfor %}
+          </select>
+        {% else %}
+          <p style="color: #e91e63;">Нет активных пунктов выдачи.</p>
+        {% endif %}
+      </div>
+
+      <!-- Способ оплаты (заглушка) -->
+      <div style="margin-bottom: 1.5rem;">
+        <label><strong>Способ оплаты:</strong></label>
+        <div style="margin-top: 0.5rem;">
+          <label style="display: block; margin-bottom: 0.5rem;">
+            <input type="radio" name="payment_method" value="cash" checked> Наличными при получении
+          </label>
+          <label style="display: block;">
+            <input type="radio" name="payment_method" value="card"> Картой при получении
+          </label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 1.1rem;">
+        Подтвердить заказ
+      </button>
+    </form>
+
+    <div style="margin-top: 1.5rem; text-align: center;">
+      <a href="{% url 'maingb:cart' %}" style="color: var(--pink); text-decoration: none;">← Вернуться в корзину</a>
+    </div>
+  {% else %}
+    <p>Корзина пуста.</p>
+    <a href="{% url 'maingb:home' %}" class="btn btn-primary">Перейти к товарам</a>
+  {% endif %}
+</div>
+{% endblock %}

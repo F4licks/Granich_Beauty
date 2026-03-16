@@ -10,24 +10,68 @@
 
   <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
     <h3>Аккаунт</h3>
-    
+      {% if orders %}
+        <div class="card" style="padding: 1.5rem; margin-top: 2rem;">
+          <h3>Мои заказы</h3>
+          {% for order in orders %}
+            <div style="border: 1px solid #eee; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <strong>Заказ #{{ order.id }}</strong>
+                <span>{{ order.created_at|date:"d.m.Y H:i" }}</span>
+              </div>
+              <p><strong>Пункт выдачи:</strong> {{ order.delivery_point.name }}</p>
+              <p><strong>Статус:</strong> 
+                {% if order.status == 'collecting' %}Товар собирается
+                {% elif order.status == 'shipped' %}Передан в доставку
+                {% elif order.status == 'in_transit' %}В пути
+                {% elif order.status == 'ready' %}Готов к выдаче
+                {% elif order.status == 'delivered' %}Получен
+                {% endif %}
+              </p>
+              <div style="margin-top: 0.5rem;">
+                <strong>Товары:</strong>
+                <ul style="padding-left: 1.2rem; margin-top: 0.3rem;">
+                  {% for item in order.items.all %}
+                    <li>{{ item.quantity }} × {{ item.product.name }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+              <div style="text-align: right; margin-top: 0.5rem; font-weight: bold; color: var(--pink-dark);">
+                Итого: {{ order.total_amount|floatformat:2 }} ₽
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
     <p><strong>Логин:</strong> {{ user.username }}</p>
     
-    <p>
-      <strong>Ник:</strong>
-      <form method="POST" style="display:inline; margin-left: 0.5rem;">
-        {% csrf_token %}
+    <!-- Форма профиля -->
+    <form method="POST" style="margin-top: 1rem;">
+      {% csrf_token %}
+      
+      <div style="margin-bottom: 1rem;">
+        <label>{{ profile_form.nickname.label }}</label><br>
         {{ profile_form.nickname }}
-        <button type="submit" name="save_profile" class="btn btn-outline" style="padding: 4px 10px; font-size:0.85rem;">
-          Сохранить
-        </button>
-      </form>
-    </p>
+      </div>
+      
+      <div style="margin-bottom: 1rem;">
+        <label>{{ profile_form.email.label }}</label><br>
+        {{ profile_form.email }}
+        {% if profile_form.email.errors %}
+          <div style="color: #e91e63; font-size: 0.9rem; margin-top: 0.2rem;">
+            {{ profile_form.email.errors }}
+          </div>
+        {% endif %}
+      </div>
 
-    <p><strong>Почта:</strong> {{ user.email|default:"Не указана" }}</p>
+      <button type="submit" name="save_profile" class="btn btn-primary" style="padding: 6px 16px;">
+        Сохранить профиль
+      </button>
+    </form>
 
+    <!-- Смена пароля -->
     {% if user.email %}
-      <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee;">
+      <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #eee;">
         <h4>Изменить пароль</h4>
         <form method="POST">
           {% csrf_token %}
@@ -45,14 +89,14 @@
             <label>{{ password_form.new_password2.label }}</label><br>
             {{ password_form.new_password2 }}
           </div>
-          <button type="submit" name="change_password" class="btn btn-primary" style="margin-top: 1rem; padding: 6px 16px;">
+          <button type="submit" name="change_password" class="btn btn-outline" style="padding: 6px 16px; margin-top: 1rem;">
             Изменить пароль
           </button>
         </form>
       </div>
     {% else %}
       <p style="color: #e91e63; font-size: 0.9rem; margin-top: 1rem;">
-        Чтобы изменить пароль, укажите email в настройках аккаунта (например, через админку).
+        Укажите email, чтобы иметь возможность изменять пароль.
       </p>
     {% endif %}
   </div>

@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Список категорий
 CATEGORY_CHOICES = [
     ('acrylic_powder', 'Акриловая пудра'),
     ('gel', 'Гель'),
@@ -34,7 +33,7 @@ class Product(models.Model):
     category = models.CharField(
         max_length=50,
         choices=CATEGORY_CHOICES,
-        verbose_name="Категория (для фильтрации)"
+        verbose_name="Категория"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -64,16 +63,6 @@ class UserProfile(models.Model):
         return f"{self.nickname or self.user.username}"
 
 
-class Address(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=100, blank=True)
-    address_line = models.TextField()
-    is_default = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"{self.title} — {self.address_line[:30]}"
-
-
 class CartItem(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -82,6 +71,45 @@ class CartItem(models.Model):
 
     class Meta:
         unique_together = ('user', 'product')
+
+    def __str__(self):
+        return f"{self.quantity} × {self.product.name}"
+
+
+class DeliveryPoint(models.Model):
+    name = models.CharField(max_length=255, verbose_name="Название пункта")
+    address = models.TextField(verbose_name="Адрес")
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
+
+    def __str__(self):
+        return f"{self.name} — {self.address[:30]}"
+
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('collecting', 'Товар собирается'),
+        ('shipped', 'Передан в доставку'),
+        ('in_transit', 'В пути'),
+        ('ready', 'Готов к выдаче'),
+        ('delivered', 'Получен'),
+    ]
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    delivery_point = models.ForeignKey(DeliveryPoint, on_delete=models.PROTECT, verbose_name="Пункт выдачи")
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Итого")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='collecting', verbose_name="Статус")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Создан")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлён")
+
+    def __str__(self):
+        return f"Заказ #{self.id} от {self.user.username}"
+
+
+class OrderItem(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)  # цена на момент заказа
 
     def __str__(self):
         return f"{self.quantity} × {self.product.name}"

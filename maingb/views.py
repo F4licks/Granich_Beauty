@@ -1,4 +1,3 @@
-# maingb/views.py
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.forms import AuthenticationForm
@@ -7,7 +6,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Sum, Prefetch
 from django.contrib.auth.models import User
-from .models import Product, CartItem, UserProfile, CATEGORY_CHOICES
+from .models import Product, CartItem, UserProfile, DeliveryPoint, Order, OrderItem, CATEGORY_CHOICES
 from .forms import RegisterForm, ProfileForm, PasswordChangeForm
 
 
@@ -21,14 +20,12 @@ def get_cart_count(user):
 def home(request):
     products = Product.objects.prefetch_related('images')
     
-    # Параметры
     category = request.GET.get('category')
     query = request.GET.get('q')
     sort = request.GET.get('sort')
     price_min = request.GET.get('price_min')
     price_max = request.GET.get('price_max')
 
-    # Фильтрация
     if category:
         products = products.filter(category=category)
     if query:
@@ -38,15 +35,13 @@ def home(request):
     if price_max:
         products = products.filter(price__lte=price_max)
 
-    # Сортировка
     if sort == 'price_asc':
         products = products.order_by('price')
     elif sort == 'price_desc':
         products = products.order_by('-price')
     else:
-        products = products.order_by('-created_at')  # по умолчанию — новые сверху
+        products = products.order_by('-created_at')
 
-    # Prefetch корзины
     if request.user.is_authenticated:
         cart_prefetch = Prefetch(
             'cartitem_set',
@@ -57,7 +52,6 @@ def home(request):
     else:
         products = products.prefetch_related('images')
 
-    # Категории для фильтра
     used_categories = products.values_list('category', flat=True).distinct()
     category_choices = [(code, label) for code, label in CATEGORY_CHOICES if code in used_categories]
 
@@ -140,6 +134,67 @@ def ajax_update_cart(request):
     })
 
 
+@login_required
+def checkout_view(request):
+    cart_items = CartItem.objects.filter(user=request.user).select_related('product')
+    if not cart_items.exists():
+        messages.error(request, "Корзина пуста.")
+        return redirect('maingb:cart')
+
+    delivery_points = DeliveryPoint.objects.filter(is_active=True)
+
+    if request.method == 'POST':
+        delivery_id = request.POST.get('delivery_point')
+        payment_method = request.POST.get('payment_method')
+
+        if not delivery_id:
+            messages.error(request, "Выберите пункт выдачи.")
+            return render(request, 'checkout.html', {
+                'cart_items': cart_items,
+                'delivery_points': delivery_points,
+                'total': sum(item.product.price * item.quantity for item in cart_items)
+            })
+
+        try:
+            delivery_point = DeliveryPoint.objects.get(id=delivery_id, is_active=True)
+        except DeliveryPoint.DoesNotExist:
+            messages.error(request, "Неверный пункт выдачи.")
+            return render(request, 'checkout.html', {
+                'cart_items': cart_items,
+                'delivery_points': delivery_points,
+                'total': sum(item.product.price * item.quantity for item in cart_items)
+            })
+
+        total = sum(item.product.price * item.quantity for item in cart_items)
+        order = Order.objects.create(
+            user=request.user,
+            delivery_point=delivery_point,
+            total_amount=total,
+            status='collecting'
+        )
+
+        for item in cart_items:
+            OrderItem.objects.create(
+                order=order,
+                product=item.product,
+                quantity=item.quantity,
+                price=item.product.price
+            )
+
+        cart_items.delete()
+        messages.success(request, "Заказ оформлен!")
+        return redirect('maingb:home')
+
+    total = sum(item.product.price * item.quantity for item in cart_items)
+    context = {
+        'cart_items': cart_items,
+        'delivery_points': delivery_points,
+        'total': total,
+        'cart_count': get_cart_count(request.user),
+    }
+    return render(request, 'checkout.html', context)
+
+
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -181,10 +236,11 @@ def register_view(request):
 @login_required
 def profile_view(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
 
     if request.method == 'POST':
         if 'save_profile' in request.POST:
-            profile_form = ProfileForm(request.POST, instance=profile)
+            profile_form = ProfileForm(request.POST, instance=profile, user=request.user)
             if profile_form.is_valid():
                 profile_form.save()
                 messages.success(request, "Профиль обновлён.")
@@ -200,13 +256,14 @@ def profile_view(request):
             else:
                 messages.error(request, "Ошибка при смене пароля.")
 
-    profile_form = ProfileForm(instance=profile)
+    profile_form = ProfileForm(instance=profile, user=request.user)
     password_form = PasswordChangeForm(user=request.user)
 
     context = {
         'profile': profile,
         'profile_form': profile_form,
         'password_form': password_form,
+        'orders': orders,
         'cart_count': get_cart_count(request.user),
     }
     return render(request, 'profile.html', context)

@@ -11,8 +11,8 @@ class RegisterForm(UserCreationForm):
 
 class ProfileForm(forms.ModelForm):
     email = forms.EmailField(
-        label="Электронная почта",
         required=False,
+        label="Email",
         widget=forms.EmailInput(attrs={'class': 'form-control'})
     )
 
@@ -21,26 +21,38 @@ class ProfileForm(forms.ModelForm):
         fields = ('nickname', 'default_address')
 
     def __init__(self, *args, **kwargs):
-        self.user = kwargs.pop('user', None)
+        self.user = kwargs.pop('user', None)  # ← извлекаем user из kwargs
         super().__init__(*args, **kwargs)
-        if self.user:
+        
+        # Заполняем поле email текущим значением из пользователя
+        if self.user and self.user.email:
             self.fields['email'].initial = self.user.email
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        if email and User.objects.filter(email=email).exclude(pk=self.user.pk).exists():
-            raise forms.ValidationError("Этот email уже используется.")
+        
+        # Проверяем, что user передан
+        if not self.user:
+            raise forms.ValidationError("Ошибка: пользователь не определён")
+        
+        if email:
+            # Проверяем, что этот email не используется другим пользователем
+            if User.objects.filter(email=email).exclude(pk=self.user.pk).exists():
+                raise forms.ValidationError("Этот email уже используется другим пользователем")
         return email
 
     def save(self, commit=True):
-        profile = super().save(commit=False)
-        if self.user and 'email' in self.cleaned_data:
-            self.user.email = self.cleaned_data['email']
-            if commit:
-                self.user.save()
+        instance = super().save(commit=False)
+        
+        # Сохраняем email в модель пользователя
+        email = self.cleaned_data.get('email')
+        if email and self.user:
+            self.user.email = email
+            self.user.save()
+        
         if commit:
-            profile.save()
-        return profile
+            instance.save()
+        return instance
 
 class PasswordChangeForm(BasePasswordChangeForm):
     def __init__(self, *args, **kwargs):

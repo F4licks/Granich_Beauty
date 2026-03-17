@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Sum, Prefetch
 from django.contrib.auth.models import User
-from .models import Product, CartItem, UserProfile, DeliveryPoint, Order, OrderItem, CATEGORY_CHOICES
+from .models import Product, CartItem, UserProfile, CATEGORY_CHOICES, SiteSettings, DeliveryPoint, Order, OrderItem
 from .forms import RegisterForm, ProfileForm, PasswordChangeForm
 
 
@@ -54,6 +54,8 @@ def home(request):
 
     used_categories = products.values_list('category', flat=True).distinct()
     category_choices = [(code, label) for code, label in CATEGORY_CHOICES if code in used_categories]
+    
+    site_settings = SiteSettings.load()
 
     context = {
         'products': products,
@@ -64,9 +66,9 @@ def home(request):
         'sort': sort or '',
         'price_min': price_min or '',
         'price_max': price_max or '',
+        'site_settings': site_settings,
     }
     return render(request, 'home.html', context)
-
 
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
@@ -236,7 +238,6 @@ def register_view(request):
 @login_required
 def profile_view(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
 
     if request.method == 'POST':
         if 'save_profile' in request.POST:
@@ -256,8 +257,12 @@ def profile_view(request):
             else:
                 messages.error(request, "Ошибка при смене пароля.")
 
-    profile_form = ProfileForm(instance=profile, user=request.user)
-    password_form = PasswordChangeForm(user=request.user)
+    else:
+        profile_form = ProfileForm(instance=profile, user=request.user)
+        password_form = PasswordChangeForm(user=request.user)
+
+    # Заказы пользователя
+    orders = Order.objects.filter(user=request.user).order_by('-created_at')
 
     context = {
         'profile': profile,

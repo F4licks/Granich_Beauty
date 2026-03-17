@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Ganich Beauty{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
-  {% csrf_token %}
 </head>
 <body>
   <header>
@@ -40,6 +39,18 @@
     {% block content %}{% endblock %}
   </main>
 
+  <!-- CSRF token для AJAX -->
+  {% csrf_token %}
+
+  <!-- Передаем URL в глобальную переменную -->
+  <script>
+    window.urls = {
+      ajax_update_cart: "{% url 'maingb:ajax_update_cart' %}"
+    };
+  </script>
+
+  <!-- Подключение скриптов -->
   <script src="{% static 'js/script.js' %}"></script>
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>

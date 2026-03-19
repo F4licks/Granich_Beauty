@@ -6,7 +6,7 @@
 {% block content %}
 <div style="padding: 2rem 1rem; max-width: 1400px; margin: 0 auto;">
 
-  <h1 style="text-align: center; margin-bottom: 2rem;">Ganich Beauty</h1>
+  <h1 style="text-align: center; margin-bottom: 2rem; color: var(--pink-dark); font-size: 2.2rem; font-weight: 700;">Ganich Beauty</h1>
 
   <!-- Поиск и сортировка -->
   <div style="max-width: 800px; margin: 0 auto 2rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end;">
@@ -16,8 +16,8 @@
                name="q" 
                value="{{ search_query }}" 
                placeholder="Поиск по названию..." 
-               style="flex: 1; padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
-        <button type="submit" class="btn btn-primary" style="padding: 0.6rem 1.2rem; font-size: 1rem;">Найти</button>
+               style="flex: 1; padding: 1rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; transition: all 0.2s;">
+        <button type="submit" class="btn btn-primary" style="padding: 1rem 1.5rem; font-size: 1rem;">Найти</button>
       </form>
     </div>
 
@@ -28,7 +28,7 @@
         {% if price_min %}<input type="hidden" name="price_min" value="{{ price_min }}">{% endif %}
         {% if price_max %}<input type="hidden" name="price_max" value="{{ price_max }}">{% endif %}
 
-        <select name="sort" onchange="this.form.submit()" style="padding: 0.6rem; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+        <select name="sort" onchange="this.form.submit()" style="padding: 1rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem; width: 100%;">
           <option value="">Сортировка по цене</option>
           <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Сначала дешёвые</option>
           <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Сначала дорогие</option>
@@ -39,12 +39,12 @@
 
   <div style="display: flex; gap: 2rem;">
     <!-- Фильтр слева -->
-    <div style="width: 240px; flex-shrink: 0; position: sticky; top: 20px; height: fit-content; background: #f9f9f9; padding: 1.2rem; border-radius: 8px;">
-      <strong>Категория:</strong>
-      <div style="display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.8rem; margin-bottom: 1.5rem;">
+    <div style="width: 260px; flex-shrink: 0; position: sticky; top: 20px; height: fit-content; background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 1.5rem; margin-bottom: 2rem;">
+      <h3 class="filter-title" style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem; font-weight: 600; color: var(--black); margin-bottom: 1rem;">Категория</h3>
+      <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
         <a href="?{% if search_query %}q={{ search_query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
            class="filter-btn {% if not selected_category %}filter-btn--active{% endif %}">
-          Все
+          Все категории
         </a>
         {% for code, label in categories %}
           <a href="?category={{ code }}{% if search_query %}&q={{ search_query }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}" 
@@ -54,21 +54,23 @@
         {% endfor %}
       </div>
 
-      <strong>Цена (₽):</strong>
-      <form method="GET" style="margin-top: 0.8rem;">
+      <h3 class="filter-title" style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem; font-weight: 600; color: var(--black); margin-top: 1.5rem; margin-bottom: 1rem;">Цена (₽)</h3>
+      <form method="GET" style="margin-top: 0.5rem;">
         {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
         {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category }}">{% endif %}
         {% if sort %}<input type="hidden" name="sort" value="{{ sort }}">{% endif %}
 
-        <div style="display: flex; gap: 0.3rem; margin-top: 0.5rem;">
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
           <input type="number" name="price_min" value="{{ price_min|default:'' }}" 
                  placeholder="от" 
-                 style="width: 70px; padding: 0.3rem; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 3px;">
+                 style="width: 100%; padding: 1rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem;">
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
           <input type="number" name="price_max" value="{{ price_max|default:'' }}" 
                  placeholder="до" 
-                 style="width: 70px; padding: 0.3rem; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 3px;">
+                 style="width: 100%; padding: 1rem; border: 2px solid var(--border); border-radius: 8px; font-size: 1rem;">
         </div>
-        <button type="submit" class="btn btn-outline" style="margin-top: 0.5rem; padding: 0.3rem 0.6rem; font-size: 0.9rem; width: 100%;">
+        <button type="submit" class="btn btn-outline" style="width: 100%; margin-top: 0.5rem; padding: 1rem;">
           Применить
         </button>
       </form>
@@ -85,26 +87,20 @@
                 <div class="carousel-inner">
                   {% for img in product.images.all %}
                     <div class="carousel-item {% if forloop.first %}active{% endif %}" 
-                         data-images='[
-                           {% for img2 in product.images.all %}
-                             "{{ img2.image.url|escapejs }}"{% if not forloop.last %},{% endif %}
-                           {% endfor %}
-                         ]'
-                         data-index="{{ forloop.counter0 }}"
-                         onclick="handleImageClick(this)">
+                         onclick="openModal({{ product.id }}, {{ forloop.counter0 }})">
                       <img src="{{ img.image.url }}" alt="{{ product.name }}" 
                            class="product-img" 
                            style="width:100%; height:300px; object-fit:cover; border-radius: 8px; cursor: zoom-in;">
                     </div>
                   {% empty %}
                     <div class="carousel-item active" style="background:#eee; height:300px; display:flex; align-items:center; justify-content:center; border-radius: 8px;">
-                      <span>Нет изображений</span>
+                      <span style="color: #777; font-size: 1.2rem;">Нет изображений</span>
                     </div>
                   {% endfor %}
                 </div>
-                <div class="carousel-controls" style="margin-top: 8px;">
+                <div class="carousel-controls" style="margin-top: 8px; display: flex; justify-content: center; gap: 8px;">
                   {% for img in product.images.all %}
-                    <span class="carousel-dot {% if forloop.first %}active{% endif %}"></span>
+                    <span class="carousel-dot {% if forloop.first %}active{% endif %}" style="width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.5); cursor: pointer;"></span>
                   {% endfor %}
                 </div>
               </div>
@@ -113,7 +109,7 @@
             <!-- Информация справа -->
             <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; justify-content: space-between;">
               <div>
-                <h3 class="product-title">{{ product.name }}</h3>
+                <h3 class="product-title" style="font-size: 1.4rem; margin: 0.5rem 0; color: var(--pink-dark);">{{ product.name }}</h3>
                 
                 <!-- Сворачиваемое описание -->
                 <div class="product-desc-wrapper" style="margin: 0.5rem 0; line-height: 1.5;">
@@ -129,7 +125,7 @@
                   Подробнее
                 </button>
                 
-                <div class="product-price" style="font-size: 1.4rem; margin: 0.5rem 0; color: var(--pink-dark);">
+                <div class="product-price" style="font-size: 1.6rem; margin: 0.5rem 0; color: var(--pink-dark);">
                   {{ product.price }} ₽
                 </div>
               </div>
@@ -139,16 +135,16 @@
                   {% with item=product.cart_items|first %}
                     {% if item %}
                       <div class="cart-counter" style="display: flex; align-items: center; gap: 0.5rem;">
-                        <button class="cart-dec btn btn-outline" style="width: 30px;">−</button>
-                        <span class="cart-qty" style="font-weight: bold;">{{ item.quantity }}</span>
-                        <button class="cart-inc btn btn-outline" style="width: 30px;">+</button>
+                        <button class="cart-dec btn btn-outline" style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;">−</button>
+                        <span class="cart-qty" style="font-weight: bold; font-size: 1.2rem;">{{ item.quantity }}</span>
+                        <button class="cart-inc btn btn-outline" style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;">+</button>
                       </div>
                     {% else %}
-                      <button class="cart-add btn btn-primary">В корзину</button>
+                      <button class="cart-add btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">В корзину</button>
                     {% endif %}
                   {% endwith %}
                 {% else %}
-                  <button class="cart-add btn btn-outline" onclick="alert('Пожалуйста, войдите или зарегистрируйтесь');">
+                  <button class="cart-add btn btn-outline" onclick="alert('Пожалуйста, войдите или зарегистрируйтесь');" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
                     В корзину
                   </button>
                 {% endif %}
@@ -157,7 +153,7 @@
           </div>
         {% endfor %}
       {% else %}
-        <p style="text-align: center; padding: 2rem; color: #777;">
+        <p style="text-align: center; padding: 2rem; color: #777; font-size: 1.2rem;">
           {% if selected_category or search_query or price_min or price_max %}
             Товары не найдены.
           {% else %}
@@ -170,23 +166,23 @@
 
   <!-- Контактные данные -->
   {% if site_settings.show_email or site_settings.show_phone or site_settings.show_address %}
-    <div style="margin-top: 4rem; padding: 2rem; background: #f9f9f9; border-radius: 8px; text-align: center;">
-      <h3 style="margin-bottom: 1rem; color: var(--pink-dark);">Контакты</h3>
+    <div style="margin-top: 4rem; padding: 2rem; background: #f9f9f9; border-radius: 12px; text-align: center; box-shadow: var(--shadow);">
+      <h3 style="margin-bottom: 1rem; color: var(--pink-dark); font-size: 1.5rem;">Контакты</h3>
       
       {% if site_settings.show_email and site_settings.email %}
-        <p style="margin: 0.5rem 0;">
+        <p style="margin: 0.5rem 0; font-size: 1.1rem;">
           <strong>📧 Email:</strong> {{ site_settings.email }}
         </p>
       {% endif %}
       
       {% if site_settings.show_phone and site_settings.phone %}
-        <p style="margin: 0.5rem 0;">
+        <p style="margin: 0.5rem 0; font-size: 1.1rem;">
           <strong>📞 Телефон:</strong> {{ site_settings.phone }}
         </p>
       {% endif %}
       
       {% if site_settings.show_address and site_settings.address %}
-        <p style="margin: 0.5rem 0;">
+        <p style="margin: 0.5rem 0; font-size: 1.1rem;">
           <strong>📍 Адрес:</strong><br>
           {{ site_settings.address|linebreaksbr }}
         </p>
@@ -194,26 +190,238 @@
     </div>
   {% endif %}
 
-  <!-- Модальное окно для просмотра фото -->
-  <div id="imageModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center;">
-    <div style="position: relative; max-width: 90%; max-height: 90%;">
-      <img id="modalImage" src="" alt="Увеличенное фото" style="max-width: 100%; max-height: 90vh; display: block;">
-      
-      <!-- Стрелки навигации -->
-      <button id="prevBtn" style="position: absolute; left: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.3); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 24px; display: none;">❮</button>
-      <button id="nextBtn" style="position: absolute; right: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.3); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 24px; display: none;">❯</button>
-      
-      <!-- Закрытие -->
-      <button id="closeModal" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: white; font-size: 24px; cursor: pointer;">✕</button>
-    </div>
-    
-    <!-- Индикаторы -->
-    <div id="modalDots" style="position: absolute; bottom: 20px; display: flex; gap: 10px;"></div>
-  </div>
-
 </div>
 
-{% block extra_scripts %}
-<script src="{% static 'js/script_home.js' %}"></script>
-{% endblock %}
+<!-- Модальное окно для просмотра фото -->
+<div id="imageModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center;">
+  <div style="position: relative; max-width: 90%; max-height: 90%;">
+    <img id="modalImage" src="" alt="Увеличенное фото" style="max-width: 100%; max-height: 90vh; display: block; border-radius: 8px;">
+    
+    <!-- Стрелки навигации -->
+    <button id="prevBtn" style="position: absolute; left: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.3); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 24px; display: none;">❮</button>
+    <button id="nextBtn" style="position: absolute; right: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.3); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 24px; display: none;">❯</button>
+    
+    <!-- Закрытие -->
+    <button id="closeModal" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: white; font-size: 24px; cursor: pointer;">✕</button>
+  </div>
+  
+  <!-- Индикаторы -->
+  <div id="modalDots" style="position: absolute; bottom: 20px; display: flex; gap: 10px;"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // ========== Сворачивание описания ==========
+  function initDescriptionToggles() {
+    document.querySelectorAll('.product-desc-content').forEach(content => {
+      const wrapper = content.parentElement;
+      const button = wrapper.nextElementSibling;
+      
+      if (!button || !button.classList.contains('toggle-desc-btn')) return;
+      
+      const lineHeight = parseFloat(getComputedStyle(content).lineHeight) || 24;
+      const maxHeight = 4 * lineHeight;
+      const fullHeight = content.scrollHeight;
+      
+      if (fullHeight > maxHeight) {
+        content.style.maxHeight = maxHeight + 'px';
+        content.style.overflow = 'hidden';
+        content.style.position = 'relative';
+        
+        const gradient = document.createElement('div');
+        gradient.className = 'desc-gradient';
+        gradient.style.cssText = `
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: ${lineHeight}px;
+          background: linear-gradient(to top, rgba(255,255,255,1) 30%, rgba(255,255,255,0) 100%);
+        `;
+        content.appendChild(gradient);
+        
+        button.style.display = 'block';
+        
+        button.onclick = function() {
+          const isExpanded = this.getAttribute('data-expanded') === 'true';
+          
+          if (isExpanded) {
+            content.style.maxHeight = maxHeight + 'px';
+            content.style.overflow = 'hidden';
+            gradient.style.display = 'block';
+            this.textContent = 'Подробнее';
+            this.setAttribute('data-expanded', 'false');
+          } else {
+            content.style.maxHeight = 'none';
+            content.style.overflow = 'visible';
+            gradient.style.display = 'none';
+            this.textContent = 'Свернуть';
+            this.setAttribute('data-expanded', 'true');
+          }
+        };
+      } else {
+        button.style.display = 'none';
+      }
+    });
+  }
+
+  // Инициализация сворачивания
+  initDescriptionToggles();
+
+  // ========== Модальное окно для фото ==========
+  let currentImageIndex = 0;
+  let currentImages = [];
+  const allProductsImages = {};
+
+  // Собираем все изображения товаров при загрузке страницы
+  {% for product in products %}
+    allProductsImages[{{ product.id }}] = [
+      {% for img in product.images.all %}
+        "{{ img.image.url }}"{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    ];
+  {% endfor %}
+
+  function openModal(productId, index) {
+    const images = allProductsImages[productId];
+    
+    if (!images || images.length === 0) {
+      console.error("Не найдены изображения для товара:", productId);
+      return;
+    }
+    
+    const modal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const modalDots = document.getElementById('modalDots');
+    
+    currentImages = images;
+    currentImageIndex = index;
+    
+    modal.style.display = 'flex';
+    modalImage.src = images[index];
+    
+    if (images.length > 1) {
+      prevBtn.style.display = 'block';
+      nextBtn.style.display = 'block';
+    } else {
+      prevBtn.style.display = 'none';
+      nextBtn.style.display = 'none';
+    }
+    
+    modalDots.innerHTML = '';
+    images.forEach((_, i) => {
+      const dot = document.createElement('span');
+      dot.style.width = '10px';
+      dot.style.height = '10px';
+      dot.style.borderRadius = '50%';
+      dot.style.background = i === index ? 'white' : 'rgba(255,255,255,0.5)';
+      dot.style.cursor = 'pointer';
+      dot.addEventListener('click', () => {
+        currentImageIndex = i;
+        modalImage.src = images[i];
+        document.querySelectorAll('#modalDots span').forEach((d, idx) => {
+          d.style.background = idx === i ? 'white' : 'rgba(255,255,255,0.5)';
+        });
+      });
+      modalDots.appendChild(dot);
+    });
+  }
+
+  function closeModal() {
+    document.getElementById('imageModal').style.display = 'none';
+  }
+
+  document.getElementById('imageModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+
+  document.getElementById('prevBtn').addEventListener('click', function() {
+    currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
+    document.getElementById('modalImage').src = currentImages[currentImageIndex];
+    document.querySelectorAll('#modalDots span').forEach((d, i) => {
+      d.style.background = i === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)';
+    });
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', function() {
+    currentImageIndex = (currentImageIndex + 1) % currentImages.length;
+    document.getElementById('modalImage').src = currentImages[currentImageIndex];
+    document.querySelectorAll('#modalDots span').forEach((d, i) => {
+      d.style.background = i === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)';
+    });
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (document.getElementById('imageModal').style.display === 'flex') {
+      if (e.key === 'Escape') closeModal();
+      else if (e.key === 'ArrowLeft') document.getElementById('prevBtn').click();
+      else if (e.key === 'ArrowRight') document.getElementById('nextBtn').click();
+    }
+  });
+
+  // ========== AJAX-корзина ==========
+  function attachListeners(card) {
+    const productId = card.dataset.productId;
+    const addBtn = card.querySelector('.cart-add');
+    const incBtn = card.querySelector('.cart-inc');
+    const decBtn = card.querySelector('.cart-dec');
+
+    if (addBtn) addBtn.onclick = () => updateCart(productId, 'add', card);
+    if (incBtn) incBtn.onclick = () => updateCart(productId, 'add', card);
+    if (decBtn) decBtn.onclick = () => updateCart(productId, 'remove', card);
+  }
+
+  function updateCart(productId, action, card) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    fetch("{% url 'maingb:ajax_update_cart' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `product_id=${productId}&action=${action}`
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Сетевая ошибка: ' + response.status);
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data.status === "removed") {
+        card.querySelector('.product-actions').innerHTML = `
+          <button class="cart-add btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">В корзину</button>
+        `;
+      } else if (data.status === "updated") {
+        card.querySelector('.product-actions').innerHTML = `
+          <div class="cart-counter" style="display: flex; align-items: center; gap: 0.5rem;">
+            <button class="cart-dec btn btn-outline" style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;">−</button>
+            <span class="cart-qty" style="font-weight: bold; font-size: 1.2rem;">${data.item_count}</span>
+            <button class="cart-inc btn btn-outline" style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;">+</button>
+          </div>
+        `;
+      }
+      
+      const badge = document.getElementById('cart-count');
+      if (badge) {
+        badge.textContent = data.cart_count || 0;
+        badge.style.display = data.cart_count > 0 ? 'flex' : 'none';
+      }
+      
+      attachListeners(card);
+    })
+    .catch(err => {
+      console.error("Ошибка корзины:", err);
+      alert("Ошибка при обновлении корзины. Попробуйте позже.");
+    });
+  }
+
+  document.querySelectorAll('.product-card').forEach(card => attachListeners(card));
+});
+</script>
 {% endblock %}

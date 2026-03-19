@@ -1,104 +1,125 @@
-<!-- maingb/templates/profile.html -->
 {% extends 'base.html' %}
-{% load static %}
+{% load widget_tweaks static %}
 
 {% block title %}Профиль | Ganich Beauty{% endblock %}
 
 {% block content %}
-<div style="max-width: 700px; margin: 2rem auto; padding: 0 1rem;">
-  <h2>Профиль пользователя</h2>
+<div style="padding: 2rem 1rem; max-width: 1400px; margin: 0 auto;">
+  <h1 style="text-align: center; margin-bottom: 2rem; color: var(--pink-dark); font-size: 2.2rem; font-weight: 700;">Мой профиль</h1>
 
-  <div class="card" style="padding: 1.5rem; margin-bottom: 2rem;">
-    <h3>Аккаунт</h3>
-      {% if orders %}
-        <div class="card" style="padding: 1.5rem; margin-top: 2rem;">
-          <h3>Мои заказы</h3>
+  <div style="display: flex; gap: 2rem;">
+    <!-- Заказы слева -->
+    <div style="flex: 1; min-width: 300px;">
+      <div style="background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 1.5rem;">
+        <h2 style="font-size: 1.4rem; margin-bottom: 1.5rem; color: var(--pink-dark); font-weight: 700;">Мои заказы</h2>
+        
+        {% if orders %}
           {% for order in orders %}
-            <div style="border: 1px solid #eee; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <strong>Заказ #{{ order.id }}</strong>
-                <span>{{ order.created_at|date:"d.m.Y H:i" }}</span>
+            <div style="padding: 1.2rem; border-bottom: 1px solid #eee; margin-bottom: 1rem;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.8rem;">
+                <h3 style="font-size: 1.2rem; margin: 0; color: var(--black); font-weight: 600;">Заказ #{{ order.id }}</h3>
+                <span style="padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; 
+                  {% if order.status == 'pending' %}background: #fff8e1; color: #ff8f00;{% elif order.status == 'confirmed' %}background: #e8f5e9; color: #388e3c;{% elif order.status == 'shipped' %}background: #e3f2fd; color: #1976d2;{% elif order.status == 'delivered' %}background: #e8f5e9; color: #388e3c;{% elif order.status == 'cancelled' %}background: #ffebee; color: #c62828;{% endif %}">
+                  {{ order.get_status_display }}
+                </span>
               </div>
-              <p><strong>Пункт выдачи:</strong> {{ order.delivery_point.name }}</p>
-              <p><strong>Статус:</strong> 
-                {% if order.status == 'collecting' %}Товар собирается
-                {% elif order.status == 'shipped' %}Передан в доставку
-                {% elif order.status == 'in_transit' %}В пути
-                {% elif order.status == 'ready' %}Готов к выдаче
-                {% elif order.status == 'delivered' %}Получен
-                {% endif %}
+              <p style="margin: 0.5rem 0; color: #777; font-size: 0.95rem;">{{ order.created_at|date:"d.m.Y H:i" }}</p>
+              <p style="margin: 0.5rem 0; font-weight: 600; color: var(--pink-dark); font-size: 1.1rem;">Сумма: {{ order.total_amount }} ₽</p>
+              <p style="margin: 0.5rem 0; color: #555; font-size: 0.95rem;">
+                <strong>Доставка:</strong> {{ order.delivery_type|capfirst }} · {{ order.payment_method|capfirst }}
               </p>
-              <div style="margin-top: 0.5rem;">
-                <strong>Товары:</strong>
-                <ul style="padding-left: 1.2rem; margin-top: 0.3rem;">
-                  {% for item in order.items.all %}
-                    <li>{{ item.quantity }} × {{ item.product.name }}</li>
-                  {% endfor %}
-                </ul>
-              </div>
-              <div style="text-align: right; margin-top: 0.5rem; font-weight: bold; color: var(--pink-dark);">
-                Итого: {{ order.total_amount|floatformat:2 }} ₽
-              </div>
             </div>
           {% endfor %}
-        </div>
-      {% endif %}
-    <p><strong>Логин:</strong> {{ user.username }}</p>
-    
-    <!-- Форма профиля -->
-    <form method="POST" style="margin-top: 1rem;">
-      {% csrf_token %}
-      
-      <div style="margin-bottom: 1rem;">
-        <label>{{ profile_form.nickname.label }}</label><br>
-        {{ profile_form.nickname }}
-      </div>
-      
-      <div style="margin-bottom: 1rem;">
-        <label>{{ profile_form.email.label }}</label><br>
-        {{ profile_form.email }}
-        {% if profile_form.email.errors %}
-          <div style="color: #e91e63; font-size: 0.9rem; margin-top: 0.2rem;">
-            {{ profile_form.email.errors }}
-          </div>
+        {% else %}
+          <p style="text-align: center; padding: 1.5rem; color: #777; font-size: 1rem;">У вас пока нет заказов</p>
         {% endif %}
       </div>
+    </div>
 
-      <button type="submit" name="save_profile" class="btn btn-primary" style="padding: 6px 16px;">
-        Сохранить профиль
-      </button>
-    </form>
-
-    <!-- Смена пароля -->
-    {% if user.email %}
-      <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #eee;">
-        <h4>Изменить пароль</h4>
-        <form method="POST">
+    <!-- Профиль справа -->
+    <div style="flex: 3; min-width: 300px;">
+      <!-- Настройки профиля -->
+      <div style="background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 2rem; margin-bottom: 2rem;">
+        <h2 style="font-size: 1.4rem; margin-bottom: 1.5rem; color: var(--pink-dark); font-weight: 700;">Настройки профиля</h2>
+        
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
           {% csrf_token %}
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-            <div>
-              <label>{{ password_form.old_password.label }}</label><br>
-              {{ password_form.old_password }}
-            </div>
-            <div>
-              <label>{{ password_form.new_password1.label }}</label><br>
-              {{ password_form.new_password1 }}
-            </div>
-          </div>
+          
           <div>
-            <label>{{ password_form.new_password2.label }}</label><br>
-            {{ password_form.new_password2 }}
+            <label for="id_nickname" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; font-size: 1rem;">Никнейм</label>
+            {{ profile_form.nickname|add_class:"form-control" }}
+            {% if profile_form.nickname.errors %}
+              <div style="color: #e91e63; margin-top: 0.3rem; font-size: 0.85rem;">
+                {% for error in profile_form.nickname.errors %}{{ error }}{% endfor %}
+              </div>
+            {% endif %}
           </div>
-          <button type="submit" name="change_password" class="btn btn-outline" style="padding: 6px 16px; margin-top: 1rem;">
-            Изменить пароль
-          </button>
+          
+          <div>
+            <label for="id_default_address" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; font-size: 1rem;">Адрес по умолчанию</label>
+            {{ profile_form.default_address|add_class:"form-control" }}
+            {% if profile_form.default_address.errors %}
+              <div style="color: #e91e63; margin-top: 0.3rem; font-size: 0.85rem;">
+                {% for error in profile_form.default_address.errors %}{{ error }}{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label for="id_email" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; font-size: 1rem;">Email</label>
+            {{ profile_form.email|add_class:"form-control" }}
+            {% if profile_form.email.errors %}
+              <div style="color: #e91e63; margin-top: 0.3rem; font-size: 0.85rem;">
+                {% for error in profile_form.email.errors %}{{ error }}{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <button type="submit" name="save_profile" class="btn btn-primary" style="padding: 1rem; font-size: 1.1rem; border-radius: 8px;">Сохранить изменения</button>
         </form>
       </div>
-    {% else %}
-      <p style="color: #e91e63; font-size: 0.9rem; margin-top: 1rem;">
-        Укажите email, чтобы иметь возможность изменять пароль.
-      </p>
-    {% endif %}
+
+      <!-- Смена пароля -->
+      <div style="background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 2rem;">
+        <h2 style="font-size: 1.4rem; margin-bottom: 1.5rem; color: var(--pink-dark); font-weight: 700;">Смена пароля</h2>
+        
+        <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+          {% csrf_token %}
+          
+          <div>
+            <label for="id_old_password" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; font-size: 1rem;">Текущий пароль</label>
+            {{ password_form.old_password|add_class:"form-control" }}
+            {% if password_form.old_password.errors %}
+              <div style="color: #e91e63; margin-top: 0.3rem; font-size: 0.85rem;">
+                {% for error in password_form.old_password.errors %}{{ error }}{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label for="id_new_password1" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; font-size: 1rem;">Новый пароль</label>
+            {{ password_form.new_password1|add_class:"form-control" }}
+            {% if password_form.new_password1.errors %}
+              <div style="color: #e91e63; margin-top: 0.3rem; font-size: 0.85rem;">
+                {% for error in password_form.new_password1.errors %}{{ error }}{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label for="id_new_password2" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; font-size: 1rem;">Подтверждение пароля</label>
+            {{ password_form.new_password2|add_class:"form-control" }}
+            {% if password_form.new_password2.errors %}
+              <div style="color: #e91e63; margin-top: 0.3rem; font-size: 0.85rem;">
+                {% for error in password_form.new_password2.errors %}{{ error }}{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <button type="submit" name="change_password" class="btn btn-primary" style="padding: 1rem; font-size: 1.1rem; border-radius: 8px;">Сменить пароль</button>
+        </form>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

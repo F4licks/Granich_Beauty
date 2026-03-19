@@ -5,52 +5,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Ganich Beauty{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-  <header>
-    <h1>Ganich Beauty</h1>
-    <div class="nav-links">
-      <a href="{% url 'maingb:home' %}">Главная</a>
+  <!-- CSRF-токен для AJAX (обязательно внутри <body>) -->
+  {% csrf_token %}
+
+  <!-- Шапка -->
+  <header style="background: var(--pink-dark); color: var(--white); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <h1 style="font-size: 1.8rem; font-weight: 700;">Ganich Beauty</h1>
+    
+    <div style="display: flex; gap: 1.5rem;">
+      <a href="{% url 'maingb:home' %}" style="color: var(--white); text-decoration: none; font-weight: 600;">Главная</a>
+      
       {% if user.is_authenticated %}
-        <a href="{% url 'maingb:profile' %}">Профиль</a>
-        <a href="{% url 'maingb:cart' %}" id="cart-btn">
+        <a href="{% url 'maingb:profile' %}" style="color: var(--white); text-decoration: none; font-weight: 600;">Профиль</a>
+        <a href="{% url 'maingb:cart' %}" style="color: var(--white); text-decoration: none; font-weight: 600; position: relative;">
           Корзина
-          {% if cart_count > 0 %}
-            <span id="cart-count" class="cart-count-badge">{{ cart_count }}</span>
-          {% endif %}
+          <span id="cart-count" style="background: var(--pink); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; position: absolute; top: -8px; right: -8px;">
+            {{ cart_count|default:0 }}
+          </span>
         </a>
-        <a href="{% url 'maingb:logout' %}">Выйти</a>
+        <a href="{% url 'maingb:logout' %}" style="color: var(--white); text-decoration: none; font-weight: 600;">Выйти</a>
       {% else %}
-        <a href="{% url 'maingb:login' %}">Войти</a>
-        <a href="{% url 'maingb:register' %}">Регистрация</a>
+        <a href="{% url 'maingb:login' %}" style="color: var(--white); text-decoration: none; font-weight: 600;">Войти</a>
+        <a href="{% url 'maingb:register' %}" style="color: var(--white); text-decoration: none; font-weight: 600;">Регистрация</a>
       {% endif %}
     </div>
   </header>
 
-  <main>
-    {% if messages %}
-      {% for message in messages %}
-        <div style="background: #f8d7da; color: #721c24; padding: 1rem; text-align: center;">
-          {{ message }}
-        </div>
-      {% endfor %}
-    {% endif %}
-    {% block content %}{% endblock %}
+  <!-- Основной контент -->
+  <main style="margin: 2rem 0;">
+    {% block content %}
+    {% endblock %}
   </main>
 
-  <!-- CSRF token для AJAX -->
-  {% csrf_token %}
+  <!-- Подвал -->
+  <footer style="background: var(--gray); color: #555; padding: 2rem; text-align: center; margin-top: 2rem;">
+    <p>© {{ year }} Ganich Beauty. Все права защищены.</p>
+  </footer>
 
-  <!-- Передаем URL в глобальную переменную -->
-  <script>
-    window.urls = {
-      ajax_update_cart: "{% url 'maingb:ajax_update_cart' %}"
-    };
-  </script>
-
-  <!-- Подключение скриптов -->
   <script src="{% static 'js/script.js' %}"></script>
-  {% block extra_scripts %}{% endblock %}
 </body>
 </html>

@@ -1,16 +1,25 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}{{ product.name }} | Ganich Beauty{% endblock %}
 
 {% block content %}
-<div style="padding: 2rem 1rem; max-width: 1200px; margin: 0 auto;">
-  <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+<div style="padding: 2rem 1rem; max-width: 1400px; margin: 0 auto;">
+  <div style="display: flex; gap: 2rem; margin-bottom: 2rem;">
+    <!-- Фото слева -->
     <div style="flex: 0 0 400px; max-width: 400px;">
       <div class="carousel">
         <div class="carousel-inner">
           {% for img in product.images.all %}
-            <div class="carousel-item {% if forloop.first %}active{% endif %}">
-              <img src="{{ img.image.url }}" alt="{{ product.name }}" class="product-img" style="width:100%; height:400px; object-fit:cover; border-radius: 8px;">
+            <div class="carousel-item {% if forloop.first %}active{% endif %}" 
+                 onclick="openModal([
+                   {% for img2 in product.images.all %}
+                     '{{ img2.image.url }}'{% if not forloop.last %},{% endif %}
+                   {% endfor %}
+                 ], {{ forloop.counter0 }})">
+              <img src="{{ img.image.url }}" alt="{{ product.name }}" 
+                   class="product-img" 
+                   style="width:100%; height:400px; object-fit:cover; border-radius: 8px; cursor: zoom-in;">
             </div>
           {% empty %}
             <div class="carousel-item active" style="background:#eee; height:400px; display:flex; align-items:center; justify-content:center; border-radius: 8px;">
@@ -26,82 +35,95 @@
       </div>
     </div>
 
-    <div style="flex: 1; min-width: 300px;">
-      <h1>{{ product.name }}</h1>
-      <p class="product-desc" style="line-height: 1.6; margin: 1rem 0;">
-        {{ product.description|safe }}
-      </p>
-      <div class="product-price" style="font-size: 1.8rem; margin: 1rem 0; color: var(--pink-dark);">{{ product.price }} ₽</div>
+    <!-- Информация справа -->
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <h2 style="font-size: 1.8rem; margin: 0.5rem 0; color: var(--pink-dark);">{{ product.name }}</h2>
+        
+        <!-- Сворачиваемое описание -->
+        <div class="product-desc-wrapper" style="margin: 0.5rem 0; line-height: 1.5;">
+          <div class="product-desc-content">
+            {{ product.description|safe }}
+          </div>
+        </div>
+        
+        <!-- Кнопка "Подробнее" -->
+        <button class="toggle-desc-btn" 
+                data-expanded="false"
+                style="display: none; background: none; border: none; color: var(--pink); cursor: pointer; padding: 0; margin-top: 0.5rem; font-size: 0.9rem; text-decoration: underline;">
+          Подробнее
+        </button>
+        
+        <div class="product-price" style="font-size: 2rem; margin: 0.5rem 0; color: var(--pink-dark);">
+          {{ product.price }} ₽
+        </div>
+      </div>
 
-      <div class="product-actions">
+      <div class="product-actions" style="margin-top: auto;">
         {% if user.is_authenticated %}
           {% with item=product.cart_items|first %}
             {% if item %}
               <div class="cart-counter" style="display: flex; align-items: center; gap: 0.5rem;">
-                <button class="cart-dec btn btn-outline" style="width: 30px;">−</button>
-                <span class="cart-qty" style="font-weight: bold;">{{ item.quantity }}</span>
-                <button class="cart-inc btn btn-outline" style="width: 30px;">+</button>
+                <button class="cart-dec btn btn-outline" style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;">−</button>
+                <span class="cart-qty" style="font-weight: bold; font-size: 1.2rem;">{{ item.quantity }}</span>
+                <button class="cart-inc btn btn-outline" style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;">+</button>
               </div>
             {% else %}
-              <button class="cart-add btn btn-primary">В корзину</button>
+              <button class="cart-add btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem;">В корзину</button>
             {% endif %}
           {% endwith %}
         {% else %}
-          <button class="cart-add btn btn-outline" onclick="alert('Войдите, чтобы добавить в корзину');">
+          <button class="cart-add btn btn-outline" onclick="alert('Пожалуйста, войдите или зарегистрируйтесь');" style="width: 100%; padding: 1rem; font-size: 1.1rem;">
             В корзину
           </button>
         {% endif %}
       </div>
     </div>
   </div>
+
+  <!-- Контактные данные -->
+  {% if site_settings.show_email or site_settings.show_phone or site_settings.show_address %}
+    <div style="margin-top: 4rem; padding: 2rem; background: #f9f9f9; border-radius: 12px; text-align: center; box-shadow: var(--shadow);">
+      <h3 style="margin-bottom: 1rem; color: var(--pink-dark);">Контакты</h3>
+      
+      {% if site_settings.show_email and site_settings.email %}
+        <p style="margin: 0.5rem 0;">
+          <strong>📧 Email:</strong> {{ site_settings.email }}
+        </p>
+      {% endif %}
+      
+      {% if site_settings.show_phone and site_settings.phone %}
+        <p style="margin: 0.5rem 0;">
+          <strong>📞 Телефон:</strong> {{ site_settings.phone }}
+        </p>
+      {% endif %}
+      
+      {% if site_settings.show_address and site_settings.address %}
+        <p style="margin: 0.5rem 0;">
+          <strong>📍 Адрес:</strong><br>
+          {{ site_settings.address|linebreaksbr }}
+        </p>
+      {% endif %}
+    </div>
+  {% endif %}
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const productId = "{{ product.id }}";
+<!-- Модальное окно для просмотра фото -->
+<div id="imageModal" class="modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center;">
+  <div style="position: relative; max-width: 90%; max-height: 90%;">
+    <img id="modalImage" src="" alt="Увеличенное фото" style="max-width: 100%; max-height: 90vh; display: block;">
+    
+    <!-- Стрелки навигации -->
+    <button id="prevBtn" style="position: absolute; left: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.3); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 24px; display: none;">❮</button>
+    <button id="nextBtn" style="position: absolute; right: -50px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.3); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 24px; display: none;">❯</button>
+    
+    <!-- Закрытие -->
+    <button id="closeModal" style="position: absolute; top: -40px; right: 0; background: none; border: none; color: white; font-size: 24px; cursor: pointer;">✕</button>
+  </div>
   
-  function updateCart(action) {
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    fetch("{% url 'maingb:ajax_update_cart' %}", {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrftoken,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: `product_id=${productId}&action=${action}`
-    })
-    .then(response => response.json())
-    .then(data => {
-      const actionsDiv = document.querySelector('.product-actions');
-      if (data.status === "removed") {
-        actionsDiv.innerHTML = `<button class="cart-add btn btn-primary">В корзину</button>`;
-        attachListeners();
-      } else if (data.status === "updated") {
-        actionsDiv.innerHTML = `
-          <div class="cart-counter" style="display: flex; align-items: center; gap: 0.5rem;">
-            <button class="cart-dec btn btn-outline" style="width: 30px;">−</button>
-            <span class="cart-qty" style="font-weight: bold;">${data.item_count}</span>
-            <button class="cart-inc btn btn-outline" style="width: 30px;">+</button>
-          </div>
-        `;
-        attachListeners();
-      }
+  <!-- Индикаторы -->
+  <div id="modalDots" style="position: absolute; bottom: 20px; display: flex; gap: 10px;"></div>
+</div>
 
-      const badge = document.getElementById('cart-count');
-      if (badge) {
-        badge.textContent = data.cart_count;
-        badge.style.display = data.cart_count > 0 ? 'inline-block' : 'none';
-      }
-    });
-  }
-
-  function attachListeners() {
-    document.querySelector('.cart-add')?.addEventListener('click', () => updateCart('add'));
-    document.querySelector('.cart-inc')?.addEventListener('click', () => updateCart('add'));
-    document.querySelector('.cart-dec')?.addEventListener('click', () => updateCart('remove'));
-  }
-
-  attachListeners();
-});
-</script>
+<script src="{% static 'js/script_product.js' %}"></script>
 {% endblock %}

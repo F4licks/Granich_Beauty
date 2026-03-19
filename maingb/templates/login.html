@@ -1,26 +1,50 @@
 {% extends 'base.html' %}
+{% load widget_tweaks static %}
 
 {% block title %}Вход | Ganich Beauty{% endblock %}
 
 {% block content %}
-<div style="max-width: 400px; margin: 3rem auto; padding: 0 1rem;">
-  <h2>Войти в аккаунт</h2>
-  <form method="POST">
-    {% csrf_token %}
-    <div style="margin-bottom: 1rem;">
-      {{ form.username.label_tag }}
-      {{ form.username }}
+<div style="padding: 2rem 1rem; max-width: 1400px; margin: 0 auto;">
+  <div style="max-width: 500px; margin: 0 auto; background: var(--white); border-radius: 16px; box-shadow: var(--shadow); padding: 2.5rem; margin-top: 2rem;">
+    <h2 style="text-align: center; margin-bottom: 1.5rem; color: var(--pink-dark); font-size: 1.8rem; font-weight: 700;">Вход в аккаунт</h2>
+    
+    <form method="POST" style="display: flex; flex-direction: column; gap: 1.5rem;">
+      {% csrf_token %}
+      
+      <div>
+        <label for="id_username" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; font-size: 1rem;">Логин</label>
+        {{ form.username|add_class:"form-control" }}
+        {% if form.username.errors %}
+          <div style="color: #e91e63; margin-top: 0.3rem; font-size: 0.85rem;">
+            {% for error in form.username.errors %}{{ error }}{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+      
+      <div>
+        <label for="id_password" style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; font-size: 1rem;">Пароль</label>
+        {{ form.password|add_class:"form-control" }}
+        {% if form.password.errors %}
+          <div style="color: #e91e63; margin-top: 0.3rem; font-size: 0.85rem;">
+            {% for error in form.password.errors %}{{ error }}{% endfor %}
+          </div>
+        {% endif %}
+      </div>
+      
+      <button type="submit" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; border-radius: 8px;">Войти</button>
+    </form>
+    
+    <div style="text-align: center; margin-top: 1.5rem; color: #777; font-size: 0.95rem;">
+      <p>Нет аккаунта? <a href="{% url 'maingb:register' %}" style="color: var(--pink); text-decoration: none; font-weight: 600;">Зарегистрироваться</a></p>
     </div>
-    <div style="margin-bottom: 1rem;">
-      {{ form.password.label_tag }}
-      {{ form.password }}
-    </div>
-    <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
-      Войти
-    </button>
-  </form>
-  <p style="text-align: center; margin-top: 1.5rem;">
-    Нет аккаунта? <a href="{% url 'maingb:register' %}">Зарегистрироваться</a>
-  </p>
+    
+    {% if messages %}
+      {% for message in messages %}
+        <div style="margin-top: 1rem; padding: 0.8rem; border-radius: 8px; background: #f8d7da; color: #721c24; text-align: center;">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

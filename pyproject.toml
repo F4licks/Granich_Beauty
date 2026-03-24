@@ -1,0 +1,13 @@
+[project]
+name = "granich-beauty"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "django>=6.0.3",
+    "django-ckeditor>=6.7.3",
+    "django-jazzmin>=3.0.4",
+    "django-widget-tweaks>=1.5.1",
+    "pillow>=12.1.1",
+]

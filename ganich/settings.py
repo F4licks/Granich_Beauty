@@ -41,6 +41,7 @@ STATICFILES_DIRS = [
 ]
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -51,6 +52,62 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'maingb',
 ]
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Ganich Beauty Admin",
+    "site_header": "Ganich Beauty",
+    "site_brand": "💄 Ganich Admin",
+    "welcome_sign": "Добро пожаловать в панель управления",
+    "copyright": "Ganich Beauty © 2026",
+    
+    # Цвета под стиль сайта
+    "brand_colour": "navbar-pink",
+    "accent": "accent-pink",
+    "navbar": "navbar-pink navbar-dark",
+    "sidebar": "sidebar-dark-pink",
+    
+    # Скрыть ненужные элементы
+    "show_ui_builder": False,  # убрать конструктор тем
+    "related_modal_active": True,  # модальные окна вместо попапов
+    
+    # Порядок разделов
+    "order_with_respect_to": [
+        "maingb.Product", 
+        "maingb.Order", 
+        "maingb.DeliveryPoint",
+        "maingb.SiteSettings",
+        "auth"
+    ],
+    
+    # Иконки для моделей
+    "icons": {
+        "maingb.Product": "fas fa-box-open",
+        "maingb.Order": "fas fa-shopping-cart",
+        "maingb.OrderItem": "fas fa-list",
+        "maingb.DeliveryPoint": "fas fa-map-marker-alt",
+        "maingb.SiteSettings": "fas fa-cog",
+        "maingb.UserProfile": "fas fa-user",
+        "maingb.CartItem": "fas fa-cart-plus",
+        "auth.User": "fas fa-user",
+        "auth.Group": "fas fa-users",
+    }
+}
+
+# Тема оформления
+JAZZMIN_UI_TWEAKS = {
+    "navbar_small_text": False,
+    "footer_small_text": False,
+    "body_small_text": False,
+    "brand_small_text": False,
+    "sidebar_nav_small_text": False,
+    "sidebar_disable_expand": False,
+    "sidebar_nav_child_indent": True,
+    "sidebar_fixed": True,
+    "navbar_fixed": True,
+    "footer_fixed": False,
+    "theme": "cerulean",  # светлая тема
+    "dark_mode_theme": None,
+}
 
 CKEDITOR_CONFIGS = {
     'default': {

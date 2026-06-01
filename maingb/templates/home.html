@@ -87,10 +87,12 @@
                 <div class="carousel-inner">
                   {% for img in product.images.all %}
                     <div class="carousel-item {% if forloop.first %}active{% endif %}" 
-                         onclick="openModal({{ product.id }}, {{ forloop.counter0 }})">
+                         data-product-id="{{ product.id }}"
+                         data-image-index="{{ forloop.counter0 }}"
+                         style="cursor: zoom-in;">
                       <img src="{{ img.image.url }}" alt="{{ product.name }}" 
                            class="product-img" 
-                           style="width:100%; height:300px; object-fit:cover; border-radius: 8px; cursor: zoom-in;">
+                           style="width:100%; height:300px; object-fit:cover; border-radius: 8px; pointer-events: none;">
                     </div>
                   {% empty %}
                     <div class="carousel-item active" style="background:#eee; height:300px; display:flex; align-items:center; justify-content:center; border-radius: 8px;">
@@ -210,8 +212,87 @@
 </div>
 
 <script>
+// ========== ГЛОБАЛЬНЫЕ переменные и функции модального окна ==========
+let currentImageIndex = 0;
+let currentImages = [];
+const allProductsImages = {};
+
+// Сбор всех изображений товаров при загрузке страницы
+{% for product in products %}
+  allProductsImages[{{ product.id }}] = [
+    {% for img in product.images.all %}
+      "{{ img.image.url }}"{% if not forloop.last %},{% endif %}
+    {% endfor %}
+  ];
+{% endfor %}
+
+// Открытие модального окна
+function openModal(productId, index) {
+  const images = allProductsImages[productId];
+  
+  if (!images || images.length === 0) {
+    console.warn("Нет изображений для товара:", productId);
+    return;
+  }
+  
+  const modal = document.getElementById('imageModal');
+  const modalImage = document.getElementById('modalImage');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const modalDots = document.getElementById('modalDots');
+  
+  currentImages = images;
+  currentImageIndex = index;
+  
+  modal.style.display = 'flex';
+  modalImage.src = images[index];
+  document.body.style.overflow = 'hidden';
+  
+  if (images.length > 1) {
+    prevBtn.style.display = 'block';
+    nextBtn.style.display = 'block';
+  } else {
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+  }
+  
+  modalDots.innerHTML = '';
+  images.forEach((_, i) => {
+    const dot = document.createElement('span');
+    dot.style.cssText = `
+      width: 10px; height: 10px; border-radius: 50%; cursor: pointer;
+      background: ${i === index ? 'white' : 'rgba(255,255,255,0.5)'};
+      transition: background 0.2s;
+    `;
+    dot.addEventListener('click', () => {
+      currentImageIndex = i;
+      updateModalImage();
+    });
+    modalDots.appendChild(dot);
+  });
+}
+
+// Обновление изображения в модальном окне
+function updateModalImage() {
+  const modalImage = document.getElementById('modalImage');
+  modalImage.src = currentImages[currentImageIndex];
+  document.querySelectorAll('#modalDots span').forEach((d, i) => {
+    d.style.background = i === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)';
+  });
+}
+
+// Закрытие модального окна
+function closeModal() {
+  document.getElementById('imageModal').style.display = 'none';
+  document.body.style.overflow = '';
+  currentImages = [];
+  currentImageIndex = 0;
+}
+
+// ========== После загрузки DOM ==========
 document.addEventListener('DOMContentLoaded', function () {
-  // ========== Сворачивание описания ==========
+  
+  // ========== 1. Сворачивание описания ==========
   function initDescriptionToggles() {
     document.querySelectorAll('.product-desc-content').forEach(content => {
       const wrapper = content.parentElement;
@@ -231,15 +312,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const gradient = document.createElement('div');
         gradient.className = 'desc-gradient';
         gradient.style.cssText = `
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
+          position: absolute; bottom: 0; left: 0; right: 0;
           height: ${lineHeight}px;
           background: linear-gradient(to top, rgba(255,255,255,1) 30%, rgba(255,255,255,0) 100%);
         `;
         content.appendChild(gradient);
-        
         button.style.display = 'block';
         
         button.onclick = function() {
@@ -259,111 +336,49 @@ document.addEventListener('DOMContentLoaded', function () {
             this.setAttribute('data-expanded', 'true');
           }
         };
-      } else {
-        button.style.display = 'none';
       }
     });
   }
-
-  // Инициализация сворачивания
+  
   initDescriptionToggles();
 
-  // ========== Модальное окно для фото ==========
-  let currentImageIndex = 0;
-  let currentImages = [];
-  const allProductsImages = {};
-
-  // Собираем все изображения товаров при загрузке страницы
-  {% for product in products %}
-    allProductsImages[{{ product.id }}] = [
-      {% for img in product.images.all %}
-        "{{ img.image.url }}"{% if not forloop.last %},{% endif %}
-      {% endfor %}
-    ];
-  {% endfor %}
-
-  function openModal(productId, index) {
-    const images = allProductsImages[productId];
-    
-    if (!images || images.length === 0) {
-      console.error("Не найдены изображения для товара:", productId);
-      return;
-    }
-    
-    const modal = document.getElementById('imageModal');
-    const modalImage = document.getElementById('modalImage');
-    const prevBtn = document.getElementById('prevBtn');
-    const nextBtn = document.getElementById('nextBtn');
-    const modalDots = document.getElementById('modalDots');
-    
-    currentImages = images;
-    currentImageIndex = index;
-    
-    modal.style.display = 'flex';
-    modalImage.src = images[index];
-    
-    if (images.length > 1) {
-      prevBtn.style.display = 'block';
-      nextBtn.style.display = 'block';
-    } else {
-      prevBtn.style.display = 'none';
-      nextBtn.style.display = 'none';
-    }
-    
-    modalDots.innerHTML = '';
-    images.forEach((_, i) => {
-      const dot = document.createElement('span');
-      dot.style.width = '10px';
-      dot.style.height = '10px';
-      dot.style.borderRadius = '50%';
-      dot.style.background = i === index ? 'white' : 'rgba(255,255,255,0.5)';
-      dot.style.cursor = 'pointer';
-      dot.addEventListener('click', () => {
-        currentImageIndex = i;
-        modalImage.src = images[i];
-        document.querySelectorAll('#modalDots span').forEach((d, idx) => {
-          d.style.background = idx === i ? 'white' : 'rgba(255,255,255,0.5)';
-        });
-      });
-      modalDots.appendChild(dot);
+  // ========== 2. Модальное окно для фото ==========
+  document.querySelectorAll('.carousel-item[data-product-id]').forEach(item => {
+    item.addEventListener('click', function() {
+      const productId = this.dataset.productId;
+      const index = parseInt(this.dataset.imageIndex) || 0;
+      openModal(productId, index);
     });
-  }
-
-  function closeModal() {
-    document.getElementById('imageModal').style.display = 'none';
-  }
-
+  });
+  
+  document.getElementById('closeModal').addEventListener('click', closeModal);
+  
   document.getElementById('imageModal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
   });
-
-  document.getElementById('closeModal').addEventListener('click', closeModal);
-
-  document.getElementById('prevBtn').addEventListener('click', function() {
+  
+  document.getElementById('prevBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
     currentImageIndex = (currentImageIndex - 1 + currentImages.length) % currentImages.length;
-    document.getElementById('modalImage').src = currentImages[currentImageIndex];
-    document.querySelectorAll('#modalDots span').forEach((d, i) => {
-      d.style.background = i === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)';
-    });
+    updateModalImage();
   });
-
-  document.getElementById('nextBtn').addEventListener('click', function() {
+  
+  document.getElementById('nextBtn').addEventListener('click', function(e) {
+    e.stopPropagation();
     currentImageIndex = (currentImageIndex + 1) % currentImages.length;
-    document.getElementById('modalImage').src = currentImages[currentImageIndex];
-    document.querySelectorAll('#modalDots span').forEach((d, i) => {
-      d.style.background = i === currentImageIndex ? 'white' : 'rgba(255,255,255,0.5)';
-    });
+    updateModalImage();
   });
-
+  
   document.addEventListener('keydown', function(e) {
-    if (document.getElementById('imageModal').style.display === 'flex') {
+    const modal = document.getElementById('imageModal');
+    if (modal && modal.style.display === 'flex') {
       if (e.key === 'Escape') closeModal();
       else if (e.key === 'ArrowLeft') document.getElementById('prevBtn').click();
       else if (e.key === 'ArrowRight') document.getElementById('nextBtn').click();
     }
   });
 
-  // ========== AJAX-корзина ==========
+  // ========== 3. AJAX-корзина ==========
   function attachListeners(card) {
     const productId = card.dataset.productId;
     const addBtn = card.querySelector('.cart-add');
@@ -387,9 +402,7 @@ document.addEventListener('DOMContentLoaded', function () {
       body: `product_id=${productId}&action=${action}`
     })
     .then(response => {
-      if (!response.ok) {
-        throw new Error('Сетевая ошибка: ' + response.status);
-      }
+      if (!response.ok) throw new Error('Ошибка: ' + response.status);
       return response.json();
     })
     .then(data => {
@@ -417,7 +430,7 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     .catch(err => {
       console.error("Ошибка корзины:", err);
-      alert("Ошибка при обновлении корзины. Попробуйте позже.");
+      alert("Ошибка при обновлении корзины.");
     });
   }
 

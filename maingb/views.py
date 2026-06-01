@@ -10,13 +10,24 @@ from .models import Product, CartItem, UserProfile, CATEGORY_CHOICES, SiteSettin
 from .forms import RegisterForm, ProfileForm, PasswordChangeForm
 
 
+# ========== Вспомогательные функции ==========
 def get_cart_count(user):
+    """Количество товаров в корзине"""
     if user.is_authenticated:
         total = CartItem.objects.filter(user=user).aggregate(total=Sum('quantity'))['total']
         return total or 0
     return 0
 
 
+def get_cart_total(user):
+    """Общая сумма корзины"""
+    if user.is_authenticated:
+        items = CartItem.objects.filter(user=user).select_related('product')
+        return sum(item.product.price * item.quantity for item in items)
+    return 0
+
+
+# ========== Главная страница ==========
 def home(request):
     products = Product.objects.prefetch_related('images')
     
@@ -70,6 +81,8 @@ def home(request):
     }
     return render(request, 'home.html', context)
 
+
+# ========== Страница товара ==========
 def product_detail(request, pk):
     product = get_object_or_404(Product, pk=pk)
     context = {
@@ -79,10 +92,11 @@ def product_detail(request, pk):
     return render(request, 'product_detail.html', context)
 
 
+# ========== Корзина ==========
 @login_required
 def cart_view(request):
     cart_items = CartItem.objects.filter(user=request.user).select_related('product')
-    total = sum(item.product.price * item.quantity for item in cart_items)
+    total = get_cart_total(request.user)
     context = {
         'cart_items': cart_items,
         'total': total,
@@ -91,6 +105,7 @@ def cart_view(request):
     return render(request, 'cart.html', context)
 
 
+# ========== AJAX обновление корзины ==========
 @login_required
 def ajax_update_cart(request):
     if request.method != "POST":
@@ -103,6 +118,16 @@ def ajax_update_cart(request):
         return JsonResponse({"error": "Нет product_id"}, status=400)
 
     product = get_object_or_404(Product, id=product_id)
+    
+    # 🔹 НОВОЕ: Полное удаление товара
+    if action == "delete":
+        CartItem.objects.filter(user=request.user, product=product).delete()
+        return JsonResponse({
+            "status": "removed",
+            "cart_count": get_cart_count(request.user),
+            "total_price": float(get_cart_total(request.user))
+        })
+    
     cart_item, created = CartItem.objects.get_or_create(
         user=request.user,
         product=product,
@@ -123,19 +148,23 @@ def ajax_update_cart(request):
                 "status": "removed",
                 "cart_count": get_cart_count(request.user),
                 "item_count": 0,
-                "product_price": float(product.price)
+                "product_price": float(product.price),
+                "total_price": float(get_cart_total(request.user))
             })
     else:
         return JsonResponse({"error": "Неизвестное действие"}, status=400)
 
+    # 🔹 НОВОЕ: возвращаем total_price для обновления общей суммы
     return JsonResponse({
         "status": "updated",
         "cart_count": get_cart_count(request.user),
         "item_count": cart_item.quantity,
-        "product_price": float(product.price)
+        "product_price": float(product.price),
+        "total_price": float(get_cart_total(request.user))
     })
 
 
+# ========== Оформление заказа ==========
 @login_required
 def checkout_view(request):
     cart_items = CartItem.objects.filter(user=request.user).select_related('product')
@@ -154,7 +183,7 @@ def checkout_view(request):
             return render(request, 'checkout.html', {
                 'cart_items': cart_items,
                 'delivery_points': delivery_points,
-                'total': sum(item.product.price * item.quantity for item in cart_items)
+                'total': get_cart_total(request.user)
             })
 
         try:
@@ -164,15 +193,21 @@ def checkout_view(request):
             return render(request, 'checkout.html', {
                 'cart_items': cart_items,
                 'delivery_points': delivery_points,
-                'total': sum(item.product.price * item.quantity for item in cart_items)
+                'total': get_cart_total(request.user)
             })
 
-        total = sum(item.product.price * item.quantity for item in cart_items)
+        total = get_cart_total(request.user)
+        
+        # 🔹 ИСПРАВЛЕНО: статус 'pending' вместо 'collecting'
         order = Order.objects.create(
             user=request.user,
             delivery_point=delivery_point,
             total_amount=total,
-            status='collecting'
+            status='pending',
+            phone=request.POST.get('phone', request.user.email or ''),
+            email=request.user.email or '',
+            delivery_type='pickup',
+            payment_method=payment_method or 'cash',
         )
 
         for item in cart_items:
@@ -180,14 +215,15 @@ def checkout_view(request):
                 order=order,
                 product=item.product,
                 quantity=item.quantity,
-                price=item.product.price
+                price=item.product.price,
+                product_name=item.product.name  # 🔹 ДОБАВЛЕНО: сохраняем название
             )
 
         cart_items.delete()
         messages.success(request, "Заказ оформлен!")
         return redirect('maingb:home')
 
-    total = sum(item.product.price * item.quantity for item in cart_items)
+    total = get_cart_total(request.user)
     context = {
         'cart_items': cart_items,
         'delivery_points': delivery_points,
@@ -197,6 +233,7 @@ def checkout_view(request):
     return render(request, 'checkout.html', context)
 
 
+# ========== Авторизация ==========
 def login_view(request):
     if request.method == 'POST':
         form = AuthenticationForm(request, data=request.POST)
@@ -215,6 +252,7 @@ def login_view(request):
     return render(request, 'login.html', context)
 
 
+# ========== Регистрация ==========
 def register_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
@@ -235,6 +273,7 @@ def register_view(request):
     return render(request, 'register.html', context)
 
 
+# ========== Профиль ==========
 @login_required
 def profile_view(request):
     profile, created = UserProfile.objects.get_or_create(user=request.user)
@@ -274,6 +313,7 @@ def profile_view(request):
     return render(request, 'profile.html', context)
 
 
+# ========== Выход ==========
 def logout_view(request):
     logout(request)
     return redirect('maingb:home')

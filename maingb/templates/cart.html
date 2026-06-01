@@ -4,53 +4,164 @@
 {% block title %}Корзина | Ganich Beauty{% endblock %}
 
 {% block content %}
-<div style="padding: 2rem 1rem; max-width: 1400px; margin: 0 auto;">
-  <h1 style="text-align: center; margin-bottom: 2rem; color: var(--pink-dark);">Ваша корзина</h1>
+<div style="padding: 2rem 1rem; max-width: 1200px; margin: 0 auto;">
+  <h1 style="text-align: center; margin-bottom: 2rem; color: var(--pink-dark); font-size: 2.2rem; font-weight: 700;">Ваша корзина</h1>
 
-  {% if cart_items %}
-    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-      {% for item in cart_items %}
-        <div class="card" style="background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 1.5rem;">
-          <div style="display: flex; gap: 2rem;">
-            <div style="flex: 0 0 150px; height: 150px; background: #f5f5f5; border-radius: 8px; overflow: hidden;">
-              {% if item.product.images.all %}
-                <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
-              {% else %}
-                <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #777;">Нет изображения</div>
-              {% endif %}
-            </div>
-            
-            <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
-              <div>
-                <h3 style="font-size: 1.3rem; color: var(--black); margin: 0.5rem 0;">{{ item.product.name }}</h3>
-                <p style="color: #555; margin: 0.5rem 0;">{{ item.product.price }} ₽ × {{ item.quantity }}</p>
+  <div id="cart-wrapper">
+    {% if cart_items %}
+      <div id="cart-items-container" style="display: flex; flex-direction: column; gap: 1.5rem;">
+        {% for item in cart_items %}
+          <!-- ✅ Добавлены data-атрибуты -->
+          <div class="cart-item card" 
+               data-product-id="{{ item.product.id }}" 
+               data-price="{{ item.product.price }}" 
+               style="background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 1.5rem; transition: opacity 0.3s, transform 0.3s;">
+            <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
+              
+              <!-- Фото -->
+              <div style="flex: 0 0 120px; height: 120px; background: #f5f5f5; border-radius: 8px; overflow: hidden;">
+                {% if item.product.images.all %}
+                  <img src="{{ item.product.images.first.image.url }}" alt="{{ item.product.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                  <div style="height: 100%; display: flex; align-items: center; justify-content: center; color: #777; font-size: 0.9rem;">Нет фото</div>
+                {% endif %}
               </div>
               
-              <div style="display: flex; align-items: center; gap: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <button class="cart-dec btn btn-outline" style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;">−</button>
-                  <span class="cart-qty" style="font-weight: bold; font-size: 1.2rem;">{{ item.quantity }}</span>
-                  <button class="cart-inc btn btn-outline" style="width: 40px; height: 40px; border-radius: 50%; font-size: 1.2rem;">+</button>
+              <!-- Инфо -->
+              <div style="flex: 1; display: flex; flex-direction: column; gap: 0.5rem; min-width: 200px;">
+                <h3 style="font-size: 1.3rem; color: var(--black); margin: 0;">{{ item.product.name }}</h3>
+                <p style="color: #777; margin: 0; font-size: 1rem;">Цена: <strong>{{ item.product.price }} ₽</strong></p>
+              </div>
+              
+              <!-- Управление -->
+              <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; background: #f9f9f9; padding: 0.5rem; border-radius: 8px;">
+                  <button class="cart-dec btn btn-outline" style="width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; padding: 0;">−</button>
+                  <span class="cart-qty" style="font-weight: bold; font-size: 1.2rem; min-width: 30px; text-align: center;">{{ item.quantity }}</span>
+                  <button class="cart-inc btn btn-outline" style="width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; padding: 0;">+</button>
                 </div>
-                <button class="cart-remove btn btn-outline" style="padding: 0.8rem 1.2rem; font-size: 1rem;">Удалить</button>
+                
+                <div style="text-align: right; min-width: 100px;">
+                  <div class="item-total" style="font-size: 1.2rem; font-weight: 700; color: var(--pink-dark); margin-bottom: 0.5rem;">
+                    {% widthratio item.quantity 1 item.product.price %} ₽
+                  </div>
+                  <button class="cart-remove btn btn-outline" style="padding: 0.5rem 1rem; font-size: 0.9rem; color: #c62828; border-color: #c62828;">Удалить</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      {% endfor %}
-    </div>
-    
-    <div style="margin-top: 2rem; background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 1.5rem;">
-      <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
-        <span style="font-size: 1.2rem; color: #555;">Итого:</span>
-        <span style="font-size: 1.4rem; color: var(--pink-dark); font-weight: 600;">{{ total|floatformat:2 }} ₽</span>
+        {% endfor %}
       </div>
-      <a href="{% url 'maingb:checkout' %}" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; text-decoration: none;">Оформить заказ</a>
-    </div>
-  {% else %}
-    <p style="text-align: center; padding: 4rem; color: #777;">Корзина пуста</p>
-  {% endif %}
+      
+      <!-- Итого -->
+      <div id="cart-summary" style="margin-top: 2rem; background: var(--white); border-radius: 12px; box-shadow: var(--shadow); padding: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <span style="font-size: 1.3rem; color: #555; font-weight: 600;">Итого:</span>
+          <!-- ✅ Добавлен ID -->
+          <span id="cart-total-price" style="font-size: 1.8rem; color: var(--pink-dark); font-weight: 700;">{{ total|floatformat:2 }} ₽</span>
+        </div>
+        <a href="{% url 'maingb:checkout' %}" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.1rem; text-decoration: none; text-align: center; display: block;">Оформить заказ</a>
+      </div>
+      
+      <!-- Сообщение пустой корзины (скрыто) -->
+      <div id="empty-cart-message" style="display: none; text-align: center; padding: 4rem; color: #777; font-size: 1.2rem;">
+        Корзина пуста. <a href="{% url 'maingb:home' %}" style="color: var(--pink); text-decoration: none; font-weight: 600;">Перейти к покупкам</a>
+      </div>
+    {% else %}
+      <p id="empty-cart-message" style="text-align: center; padding: 4rem; color: #777; font-size: 1.2rem;">
+        Корзина пуста. <a href="{% url 'maingb:home' %}" style="color: var(--pink); text-decoration: none; font-weight: 600;">Перейти к покупкам</a>
+      </p>
+    {% endif %}
+  </div>
 </div>
 
-<script src="{% static 'js/script_cart.js' %}"></script>
+<!-- ✅ JS встроен в шаблон, чтобы работали Django-теги -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const cartItemsContainer = document.getElementById('cart-items-container');
+  const cartSummary = document.getElementById('cart-summary');
+  const emptyCartMessage = document.getElementById('empty-cart-message');
+  const cartTotalPrice = document.getElementById('cart-total-price');
+  const cartCountBadge = document.getElementById('cart-count');
+
+  function attachCartListeners() {
+    document.querySelectorAll('.cart-item').forEach(item => {
+      const productId = item.dataset.productId;
+      const price = parseFloat(item.dataset.price);
+      
+      const incBtn = item.querySelector('.cart-inc');
+      const decBtn = item.querySelector('.cart-dec');
+      const removeBtn = item.querySelector('.cart-remove');
+      const qtySpan = item.querySelector('.cart-qty');
+      const itemTotalSpan = item.querySelector('.item-total');
+
+      // Защита от повторных обработчиков
+      if (incBtn && !incBtn.dataset.bound) {
+        incBtn.dataset.bound = 'true';
+        incBtn.onclick = () => updateCart(productId, 'add', item, price, qtySpan, itemTotalSpan);
+      }
+      if (decBtn && !decBtn.dataset.bound) {
+        decBtn.dataset.bound = 'true';
+        decBtn.onclick = () => updateCart(productId, 'remove', item, price, qtySpan, itemTotalSpan);
+      }
+      if (removeBtn && !removeBtn.dataset.bound) {
+        removeBtn.dataset.bound = 'true';
+        removeBtn.onclick = () => updateCart(productId, 'delete', item, price, qtySpan, itemTotalSpan);
+      }
+    });
+  }
+
+  function updateCart(productId, action, itemElement, price, qtySpan, itemTotalSpan) {
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const buttons = itemElement.querySelectorAll('button');
+    buttons.forEach(btn => btn.disabled = true);
+
+    fetch("{% url 'maingb:ajax_update_cart' %}", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrftoken,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: `product_id=${productId}&action=${action}`
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === "removed") {
+        itemElement.style.opacity = "0";
+        itemElement.style.transform = "translateX(-20px)";
+        setTimeout(() => itemElement.remove(), 300);
+      } else if (data.status === "updated") {
+        qtySpan.textContent = data.item_count;
+        itemTotalSpan.textContent = `${(price * data.item_count).toFixed(2)} ₽`;
+        buttons.forEach(btn => btn.disabled = false);
+      }
+
+      if (data.total_price !== undefined) {
+        cartTotalPrice.textContent = `${parseFloat(data.total_price).toFixed(2)} ₽`;
+      }
+
+      if (cartCountBadge) {
+        cartCountBadge.textContent = data.cart_count || 0;
+        cartCountBadge.style.display = data.cart_count > 0 ? 'flex' : 'none';
+      }
+
+      setTimeout(() => {
+        const remainingItems = document.querySelectorAll('.cart-item').length;
+        if (remainingItems === 0) {
+          if(cartItemsContainer) cartItemsContainer.style.display = 'none';
+          if(cartSummary) cartSummary.style.display = 'none';
+          if(emptyCartMessage) emptyCartMessage.style.display = 'block';
+        }
+      }, 350);
+    })
+    .catch(err => {
+      console.error("Ошибка корзины:", err);
+      alert("Ошибка при обновлении корзины.");
+      buttons.forEach(btn => btn.disabled = false);
+    });
+  }
+
+  attachCartListeners();
+});
+</script>
 {% endblock %}

@@ -22,6 +22,6 @@ uv run manage.py runserver
 ``` 
 ---------------------------------
 ## Ссылки
-**Ворд документ с объеснением -> https://docs.google.com/document/d/1qk-0eHVJpf8KLm7_zRclx2dY4GgDF05jBQU_CFkkaZo/edit?usp=drive_link**
+**Ворд документ с обзором -> https://docs.google.com/document/d/1qk-0eHVJpf8KLm7_zRclx2dY4GgDF05jBQU_CFkkaZo/edit?usp=drive_link**
 --------------------------------------
 **Таблица с Чек Листом -> https://docs.google.com/spreadsheets/d/1lvySOunjkMY_emnLyobeCt9Yr6hw5mux8R1-IzNj-ts/edit?usp=sharing**

@@ -25,3 +25,4 @@ uv run manage.py runserver
 **Ворд документ с обзором -> https://docs.google.com/document/d/1qk-0eHVJpf8KLm7_zRclx2dY4GgDF05jBQU_CFkkaZo/edit?usp=drive_link**
 --------------------------------------
 **Таблица с Чек Листом -> https://docs.google.com/spreadsheets/d/1lvySOunjkMY_emnLyobeCt9Yr6hw5mux8R1-IzNj-ts/edit?usp=sharing**
+**папка с проэктом -> https://drive.google.com/drive/folders/1NkiWOSCW5gtU6xY8UFGJ5YbpuA3ZpstQ?usp=sharing**
